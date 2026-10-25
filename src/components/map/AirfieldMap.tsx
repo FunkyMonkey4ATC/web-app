@@ -6,6 +6,7 @@ import type { Alert, Track, WorldState } from "@/lib/contract";
 import {
   ATTRIBUTION, FEATURES, NM, RUNWAYS, VIEW_BEARING, approachLine, crossing, distM, endOf, offset, project, runwayOf, zonePolygon,
 } from "@/lib/sfo";
+import gatesGeo from "../../../data/sfo-gates.json";
 
 type LonLat = [number, number];
 type XY = [number, number];
@@ -24,6 +25,17 @@ const rings = (aeroway: string, type: "Polygon" | "LineString"): XY[][] =>
 const APRONS = rings("apron", "Polygon"), TERMINALS = rings("terminal", "Polygon");
 const TAXIWAYS = rings("taxiway", "LineString"), HOLDS = rings("holding_position", "LineString");
 const RWYS = RUNWAYS.map((r) => r.ends.map((e) => project(e.threshold)) as [XY, XY]);
+// Stopways (overruns) as [threshold end, far end], so a runway reads at its full paved length
+const STOPS = rings("stopway", "LineString").map((l): [XY, XY] => {
+  const a = l[0], b = l[l.length - 1], d = (p: XY) => Math.min(...RWYS.flat().map((t) => Math.hypot(p[0] - t[0], p[1] - t[1])));
+  return d(a) < d(b) ? [a, b] : [b, a];
+});
+// Jet bridges and parking-position lead-in lines from OSM (data/sfo-gates.json): faint texture only, no labels
+const GATES = (gatesGeo as { features: { geometry: { type: string; coordinates: unknown } }[] }).features
+  .filter((g) => g.geometry.type === "LineString").map((g) => (g.geometry.coordinates as LonLat[]).map(project));
+const FIELD: XY[] = [...RWYS.flat(), ...STOPS.flat(), ...APRONS.flat(), ...TERMINALS.flat()];
+// each runway end as [threshold, end of its stopway], kept clear of labels
+const ENDS = RWYS.flat().map((t): [XY, XY] => [t, STOPS.find(([a]) => Math.hypot(a[0] - t[0], a[1] - t[1]) < 50)?.[1] ?? t]);
 const TERM_C = ((ps: XY[]): XY => [ps.reduce((s, p) => s + p[0], 0) / ps.length, ps.reduce((s, p) => s + p[1], 0) / ps.length])(TERMINALS.flat());
 
 // Label tiers: runway clearances are tier 1; their shorthand comes from the strip ("CLRD LAND 28L", "LUAW 1L", "XING 28L @P").
@@ -46,19 +58,19 @@ const INTERSECTION_BOX: XY[] = RWYS.flatMap((a, i) => RWYS.slice(i + 1).map((b) 
   .filter((p): p is XY => !!p)
   .flatMap(([x, y]) => [[x - 600, y - 600], [x + 600, y + 600]] as XY[]);
 
-function fieldBox(arr: string[]): XY[] {
-  // only 2.5 NM of each final, so the airfield fills the map; arrivals further out show as edge markers
-  return [...RWYS.flat(), ...APRONS.flat(), ...TERMINALS.flat(), ...arr.filter((e) => endOf(e)).map((e) => project(approachLine(e, 1.5)[0]))];
-}
+// only 0.6 NM of each final, so the airfield fills the map; arrivals further out show as edge markers
+const finalsBox = (arr: string[]): XY[] => arr.filter((e) => endOf(e)).map((e) => project(approachLine(e, 0.6)[0]));
 function corridorBox(a: Alert): XY[] {
   const pts: LonLat[] = [...(a.zoneRunway && runwayOf(a.zoneRunway) ? zonePolygon(a.zoneRunway) : []), ...a.paths.flat(), ...(a.point ? [a.point] : [])];
   return pts.length ? pts.map(project) : INTERSECTION_BOX;
 }
-function fit(pts: XY[], w: number, h: number, pad: number): Frame {
-  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const s = Math.min((w - 2 * pad) / Math.max(x1 - x0, 1), (h - 2 * pad) / Math.max(y1 - y0, 1));
-  return { s, tx: w / 2 - (s * (x0 + x1)) / 2, ty: h / 2 - (s * (y0 + y1)) / 2 };
+/** Uniform fit: `pts` stay below the alert dock strip (`top` px); `extra` (the finals) may run up under it. */
+function fit(pts: XY[], extra: XY[], w: number, h: number, top: number, pad: number): Frame {
+  const all = [...pts, ...extra], xs = all.map((p) => p[0]), ys = all.map((p) => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), py0 = Math.min(...pts.map((p) => p[1]));
+  const s = Math.min((w - 2 * pad) / Math.max(x1 - x0, 1), (h - 2 * pad) / Math.max(y1 - y0, 1), (h - top - 2 * pad) / Math.max(y1 - py0, 1));
+  const lo = Math.max(top + pad - s * py0, pad - s * y0), hi = h - pad - s * y1;
+  return { s, tx: w / 2 - (s * (x0 + x1)) / 2, ty: (lo + hi) / 2 };
 }
 
 // Taxiway sign anchor: ~300 m up the taxiway from the runway it crosses, so it sits off the pavement the alert paints.
@@ -120,13 +132,14 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
   const arrKey = arr.join(",");
   const dep = world?.config.dep ?? [];
   const warn = world?.alerts.find((a) => a.status === "active" && a.level === "warning" && a.banner);
+  const top = !hero && world?.alerts.some((x) => x.status === "active" && x.banner) ? DOCK : 0;
 
-  // Framing holds still for the life of an alert; it changes only with zoom, the alert itself, the config or the window.
+  // Framing holds still for the life of an alert; it changes only with zoom, the alert (and its dock), the config or the window.
   const pts = useMemo(
-    () => (zoom === "corridor" ? (warn ? corridorBox(warn) : INTERSECTION_BOX) : fieldBox(arrKey.split(","))),
+    (): [XY[], XY[]] => (zoom === "corridor" ? [warn ? corridorBox(warn) : INTERSECTION_BOX, []] : [FIELD, finalsBox(arrKey.split(","))]),
     [zoom, warn?.id, arrKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const f = useMemo(() => fit(pts, W, H, 56), [pts, W, H]);
+  const f = useMemo(() => fit(pts[0], pts[1], W, H, top, zoom === "corridor" ? 56 : 30), [pts, W, H, top, zoom]);
   const frame = useRef(f);
   frame.current = f;
   const P = (p: XY) => px(f, p);
@@ -143,14 +156,32 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
       const ticks = [1, 2, 3, 4, 5].map((n) => P(project(offset(end.threshold, back, n * NM)))).map(([x, y]) => `M${(x - nx).toFixed(1)},${(y - ny).toFixed(1)}L${(x + nx).toFixed(1)},${(y + ny).toFixed(1)}`);
       return `M${x0.toFixed(1)},${y0.toFixed(1)}L${x5.toFixed(1)},${y5.toFixed(1)}${ticks.join("")}`;
     }).join("");
+    const hw = rwyW / 2, seg = (a: XY, b: XY) => `M${a[0].toFixed(1)},${a[1].toFixed(1)}L${b[0].toFixed(1)},${b[1].toFixed(1)}`;
+    const across = (t: XY, o: XY) => { const l = Math.hypot(o[0] - t[0], o[1] - t[1]) || 1; return { u: [(o[0] - t[0]) / l, (o[1] - t[1]) / l] as XY, l }; };
+    // overrun chevrons point at the threshold, one per 30 m of stopway
+    const chevrons = STOPS.map(([a, b]) => {
+      const t = P(a), { u: [ux, uy], l } = across(t, P(b)), gap = Math.max(30 * f.s, 6), out: string[] = [];
+      for (let d = hw * 0.8 + 3; d <= l - 1; d += gap) {
+        const c: XY = [t[0] + ux * d, t[1] + uy * d];
+        out.push(`M${(c[0] - uy * hw * 0.8).toFixed(1)},${(c[1] + ux * hw * 0.8).toFixed(1)}L${(c[0] - ux * hw * 0.8).toFixed(1)},${(c[1] - uy * hw * 0.8).toFixed(1)}L${(c[0] + uy * hw * 0.8).toFixed(1)},${(c[1] - ux * hw * 0.8).toFixed(1)}`);
+      }
+      return out.join("");
+    }).join("");
+    const bars = RWYS.flatMap(([a, b]) => [[a, b], [b, a]]).map(([a, b]) => {
+      const t = P(a), { u: [ux, uy] } = across(t, P(b));
+      return seg([t[0] - uy * hw, t[1] + ux * hw], [t[0] + uy * hw, t[1] - ux * hw]);
+    }).join("");
     return (
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {/* aprons close to taxiway tone so apron taxilanes melt into one soft mass; terminals a solid block on it */}
         <path d={D(APRONS, true)} className="fill-raised" fillRule="evenodd" />
         <path d={D(TERMINALS, true)} className="fill-seam" fillRule="evenodd" />
         <path d={D(TAXIWAYS)} className="stroke-taxiway" strokeWidth={Math.max(23 * f.s, 3) * k} />
-        <path d={D(RWYS)} className="stroke-runway" strokeWidth={rwyW} strokeLinecap="butt" />
+        <path d={D(GATES)} className="stroke-ink-3" strokeWidth={1} opacity={0.3} />
+        <path d={D([...RWYS, ...STOPS])} className="stroke-runway" strokeWidth={rwyW} strokeLinecap="butt" />
+        <path d={chevrons} className="stroke-ink-3" strokeWidth={1.25 * k} opacity={0.7} />
         <path d={D(RWYS)} className="stroke-paint" strokeWidth={1.5 * k} strokeDasharray="12 10" opacity={0.8} />
+        <path d={bars} className="stroke-paint" strokeWidth={2.5 * k} strokeLinecap="butt" />
         <path d={D(HOLDS)} className="stroke-ink-3" strokeWidth={1.25 * k} opacity={0.7} />
         <path d={finals} className="stroke-ink-3" strokeWidth={1.5 * k} />
       </g>
@@ -213,7 +244,6 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
   const parties = new Set(warn?.partyTrackIds ?? []);
   const zoneEnds = warn?.zoneRunway ? runwayOf(warn.zoneRunway)?.ends.map((e) => e.name) ?? [] : [];
   const pt = warn?.point ? P(project(warn.point)) : null;
-  const top = !hero && world?.alerts.some((x) => x.status === "active" && x.banner) ? DOCK : 0;
 
   // Runway holding-position sign at the hold-short where the crossing path starts: both ends, the one on the holder's left first.
   const xing = warn?.zoneRunway && alertCall?.clearance?.taxiway && (warn.paths[0]?.length ?? 0) > 1 ? warn.paths[0] : null;
@@ -239,12 +269,12 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
     const hw = e.name.length * 4.6 + 3, hh = 8.5;
     const along = hw * Math.abs(ux) + hh * Math.abs(uy) + 6, out = (hw * Math.abs(uy) + hh * Math.abs(ux) + 3) * side;
     const x = ax + ux * along - uy * out, y = ay + uy * along + ux * out;
-    return { name: e.name, x, y, box: [x - hw, y - hh, 2 * hw, 2 * hh] as Box };
+    return { name: e.name, x, y, box: [x - hw - 4, y - hh - 4, 2 * hw + 8, 2 * hh + 8] as Box }; // 4 px margin keeps labels off the designator
   }));
 
   // Labels by tier, placed greedily so none overlaps another label, a designator or a sign:
   // 1 runway clearance / on a runway / on final / alert party / selected / caption target: callsign + clearance, may try all four sides;
-  // 2 other clearance or moving: callsign only, right side or nothing; 3 parked with no clearance: small grey symbol, no label.
+  // 2 other clearance or moving: callsign only, right or left side (right only in a warning) or nothing; 3 parked with no clearance: small faint symbol, no label.
   const stripOf = new Map(world?.strips.map((s) => [s.trackId, s]));
   const tierOf = (t: Track) => {
     const s = stripOf.get(t.id), clr = s?.clearance ?? "";
@@ -260,9 +290,13 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
     const a = taxiwayAnchor(ref, rwy), w = signW(ref, 14);
     if (a) { const [x, y] = P(a); taken.push([x - w / 2, y - 11, w, 22]); }
   }
+  const signs = taken.slice(); // designators and signs: the countdown leader must not cross them
   for (const t of tracks ?? []) if (tiers.get(t.id)! < 3) { const [x, y] = P(project([t.lon, t.lat])); taken.push([x - 12, y - 12, 24, 24]); }
-  const cost = (b: Box) => (b[0] < 0 || b[0] + b[2] > W || b[1] < top || b[1] + b[3] > H ? Infinity
-    : taken.reduce((c, o) => c + Math.max(0, Math.min(b[0] + b[2], o[0] + o[2]) - Math.max(b[0], o[0])) * Math.max(0, Math.min(b[1] + b[3], o[1] + o[3]) - Math.max(b[1], o[1])), 0));
+  // Runway ends (threshold + stopway) are soft obstacles: worth < 1 px² of real overlap, so tier 1 still labels beside them
+  const rwyW = Math.max(61 * f.s, 7) * k;
+  const ends = ENDS.map(([a, b]): Box => { const [p, q] = [P(a), P(b)], m = rwyW / 2 + 4; return [Math.min(p[0], q[0]) - m, Math.min(p[1], q[1]) - m, Math.abs(p[0] - q[0]) + 2 * m, Math.abs(p[1] - q[1]) + 2 * m]; });
+  const area = (b: Box, os: Box[]) => os.reduce((c, o) => c + Math.max(0, Math.min(b[0] + b[2], o[0] + o[2]) - Math.max(b[0], o[0])) * Math.max(0, Math.min(b[1] + b[3], o[1] + o[3]) - Math.max(b[1], o[1])), 0);
+  const cost = (b: Box) => (b[0] < 0 || b[0] + b[2] > W || b[1] < top || b[1] + b[3] > H ? Infinity : area(b, taken) + area(b, ends) / 1e4);
 
   // Countdown: off the pavement, on the side of the zone runway away from the terminals, with a leader back to the conflict point.
   const cd = (() => {
@@ -281,7 +315,12 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
       const x = Math.min(Math.max(pt[0] + nx * (d0 + dd) + ny * sl * w, w / 2 + 8), W - w / 2 - 8), y = Math.min(Math.max(pt[1] + ny * (d0 + dd) - nx * sl * w, top + h / 2 + 8), H - h / 2 - 8);
       return [x - w / 2, y - h / 2, w, h];
     }));
-    const box = boxes.map((b) => ({ b, c: cost(b) })).reduce((m, n) => (n.c < m.c ? n : m)).b;
+    // a leader that crosses a sign or designator costs more than any overlap
+    const crosses = (b: Box) => Array.from({ length: 25 }, (_, i) => i / 24).some((u) => {
+      const x = pt[0] + (b[0] + w / 2 - pt[0]) * u, y = pt[1] + (b[1] + h / 2 - pt[1]) * u;
+      return signs.some((o) => x > o[0] && x < o[0] + o[2] && y > o[1] && y < o[1] + o[3]);
+    });
+    const box = boxes.map((b) => ({ b, c: cost(b) + (crosses(b) ? 1e7 : 0) })).reduce((m, n) => (n.c < m.c ? n : m)).b;
     taken.push(box);
     return { x: box[0] + w / 2, y: box[1] + h / 2, text };
   })();
@@ -300,12 +339,14 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
     const cw = t.callsign.length * (one ? 10.5 : 9.3), rw = cw + (tags.length ? tags.length * 36 + 2 : 0); // SIM/EST sit on the callsign row, as on the strips
     const w = Math.max(rw, ...lines.map(([l]) => l.length * 9)), bottom = 10 + lines.length * 20;
     const [x, y] = P(project([t.lon, t.lat]));
+    if (x < 0 || x > W || y < top || y > H) continue; // off the map (or under the dock): its edge marker carries the callsign
     const dy = (s: (typeof SIDES)[number]) => (s.y < 0 ? -g - bottom : s.y > 0 ? g + 10 : 0);
     const boxOf = (s: (typeof SIDES)[number]): Box => [x + s.x * g - w * s.al, y + dy(s) - 10, w, bottom + 10];
-    // tier 1 takes the clearest of four sides (alert parties and the selection even if none is clear); tier 2 the right side or nothing
-    const prev = lastSide.current.get(t.id), order = one && prev ? [prev, ...SIDES.filter((s) => s !== prev)] : one ? SIDES : SIDES.slice(0, 1);
+    // tier 1 takes the clearest of four sides (alert parties and the selection even if none is clear); tier 2 right or left (right only during a warning), or nothing
+    const cands = one ? SIDES : SIDES.slice(0, warn ? 1 : 2), prev = lastSide.current.get(t.id);
+    const order = prev && cands.includes(prev) ? [prev, ...cands.filter((s) => s !== prev)] : cands;
     const best = order.map((s) => ({ s, c: cost(boxOf(s)) })).reduce((m, n) => (n.c < m.c ? n : m)); // a label keeps its side while that side stays clear
-    if (best.c > 0 && !must) continue;
+    if (best.c >= (one ? 1 : 1e-9) && !must) continue;
     taken.push(boxOf(best.s));
     lastSide.current.set(t.id, best.s);
     labels.set(t.id, { al: best.s.al, dx: best.s.x * g, dy: dy(best.s), rx: -rw * best.s.al, cw, tags, lines });
@@ -315,22 +356,22 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
   const M = 22;
   const edgeMarker = (t: Track) => {
     const q = P(project([t.lon, t.lat]));
-    if (hero || t.kind !== "aircraft" || !t.alt_ft || (q[0] >= 0 && q[0] <= W && q[1] >= 0 && q[1] <= H)) return null;
+    if (hero || t.kind !== "aircraft" || !t.alt_ft || (q[0] >= 0 && q[0] <= W && q[1] >= top && q[1] <= H)) return null; // under the dock counts as off the map
     const near = arr.filter((e) => endOf(e)).map((e) => {
       const a = P(project(endOf(e)!.threshold)), b = P(project(approachLine(e, 5)[0]));
       const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
       return { e, a, dx: dx / l, dy: dy / l, off: Math.abs((q[0] - a[0]) * dy - (q[1] - a[1]) * dx) / l / f.s, ahead: (q[0] - a[0]) * dx + (q[1] - a[1]) * dy };
     }).filter((c) => c.ahead > 0 && c.off < NM).sort((m, n) => m.off - n.off)[0];
     const a = near?.a;
-    if (!near || !a || a[0] < M || a[0] > W - M || a[1] < M || a[1] > H - M) return null; // threshold off the map (corridor zoom): no exit to mark
+    if (!near || !a || a[0] < M || a[0] > W - M || a[1] < top + M || a[1] > H - M) return null; // threshold off the map (corridor zoom): no exit to mark
     const { dx, dy } = near;
-    const tx = dx > 0 ? (W - M - a[0]) / dx : dx < 0 ? (M - a[0]) / dx : Infinity, ty = dy > 0 ? (H - M - a[1]) / dy : dy < 0 ? (M - a[1]) / dy : Infinity;
+    const tx = dx > 0 ? (W - M - a[0]) / dx : dx < 0 ? (M - a[0]) / dx : Infinity, ty = dy > 0 ? (H - M - a[1]) / dy : dy < 0 ? (top + M - a[1]) / dy : Infinity;
     const r = Math.min(tx, ty), ex = a[0] + dx * r, ey = a[1] + dy * r;
     const label = `${t.callsign} ${(distM([t.lon, t.lat], endOf(near.e)!.threshold) / NM).toFixed(1)} NM`;
     // label on the outward side of a parallel pair (L to the pilot's left), kept inside the map
     const side = near.e.endsWith("R") ? -1 : 1, nx = -dy * side, ny = dx * side, start = nx >= 0, tw = label.length * 8.7;
     const lx = Math.min(Math.max(ex + nx * 14 + (start ? 4 : -4), start ? 6 : 6 + tw), start ? W - 6 - tw : W - 6) - ex;
-    const ly = Math.min(Math.max(ey + ny * 14 + 5, 18), H - 8) - ey;
+    const ly = Math.min(Math.max(ey + ny * 14 + 5, top + 18), H - 8) - ey;
     return (
       <g key={`edge-${t.id}`} transform={`translate(${ex.toFixed(1)},${ey.toFixed(1)})`} opacity={warn && !parties.has(t.id) ? 0.3 : 1}
         className="cursor-pointer" onClick={(ev) => { ev.stopPropagation(); onSelect?.(t.id === selectedTrackId ? null : t.id); }}>
@@ -346,15 +387,15 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
     const sim = t.source === "simulated";
     const tags = [sim && "SIM", t.estimated && "EST"].filter((x): x is string => !!x);
     const hollow = sim || t.estimated;
-    const look = quiet ? (hollow ? "fill-ground stroke-ink-3" : "fill-ink-3 stroke-ground") : hollow ? "fill-ground stroke-ink" : "fill-ink stroke-ground";
-    const sk = quiet ? 0.7 * k : k; // parked traffic reads as quiet texture
+    const look = hollow ? "fill-ground stroke-ink" : "fill-ink stroke-ground";
+    const sk = quiet ? 0.65 * k : k; // parked traffic: small and faint (group opacity), so active traffic stands out
     const dash = t.estimated ? "4 3" : undefined;
     const anchor = label && ANCHOR[label.al];
     return (
       <g
         key={t.id}
         ref={(el) => { if (el) els.current.set(t.id, el); else els.current.delete(t.id); }}
-        opacity={warn && !involved ? 0.3 : 1}
+        opacity={(warn && !involved ? 0.3 : 1) * (quiet ? 0.35 : 1)}
         role={hero ? undefined : "button"}
         tabIndex={hero ? undefined : 0}
         aria-label={hero ? undefined : [t.callsign, ...tags].join(" ")}
