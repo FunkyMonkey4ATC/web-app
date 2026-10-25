@@ -10,6 +10,7 @@ let world: WorldState | null = null;
 let mode: Mode = "connecting";
 let engine: Engine | null = null;
 let started = false;
+let pendingScenario: ScenarioId | undefined; // a scenario picked before the local engine exists (landing page, no server)
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
@@ -38,7 +39,7 @@ function connect() {
     clearTimeout(fallback);
     if (mode === "server") { started = false; mode = "connecting"; setTimeout(connect, 1000); return; } // server restarted: reconnect
     mode = "local";
-    engine = await startLocal();
+    engine = await startLocal(pendingScenario);
     world = engine.getWorld();
     engine.subscribe((w) => { world = w; emit(); });
     emit();
@@ -49,7 +50,11 @@ const post = (path: string, body: unknown) =>
   fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
 
 export const actions = {
-  command: (c: OperatorCommand) => (engine ? engine.command(c) : post("/api/operator", c)),
+  command: (c: OperatorCommand) => {
+    if (engine) return engine.command(c);
+    if (c.cmd === "scenario") pendingScenario = c.value;
+    return post("/api/operator", c);
+  },
   feedback: (alertId: string, response: "ack" | "false_alarm") => (engine ? engine.feedback(alertId, response) : post("/api/feedback", { alertId, response })),
   mic: async (audio: Blob) => {
     if (engine) return engine.micUtterance(await audio.arrayBuffer(), audio.type);
