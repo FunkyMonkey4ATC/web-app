@@ -13,16 +13,16 @@ const SCENARIOS: { label: string; value: ScenarioId; ending?: "without" | "with"
 ];
 const SPEEDS = [1, 2, 4] as const;
 const btn =
-  "min-h-14 touch-manipulation rounded border border-ink-2 px-4 font-semibold " +
+  "min-h-14 touch-manipulation rounded border border-ink-2 px-4 font-semibold hover:border-ink active:bg-raised " +
   "aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-ground " +
   "aria-checked:border-ink aria-checked:bg-ink aria-checked:text-ground " +
   "disabled:border-seam disabled:text-ink-3";
 const pdt = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour12: false, timeZoneName: "short" });
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, className = "", children }: { title: string; className?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-panel p-4">
+    <section className={`bg-panel p-4 ${className}`}>
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-2">{title}</h2>
       {children}
     </section>
@@ -46,27 +46,30 @@ export default function Operator() {
   const label = clock.scenario === "incident" ? `${SCENARIO_LABEL.incident} · ${ending} Ground Truth` : SCENARIO_LABEL[clock.scenario];
 
   return (
-    <main className="mx-auto flex max-w-xl flex-col gap-px bg-seam">
-      <section aria-label="Now" className="sticky top-0 z-10 bg-panel p-4">
+    <main className="mx-auto grid max-w-xl gap-px bg-seam lg:max-w-5xl lg:grid-cols-2">
+      <section aria-label="Now" className="sticky top-0 z-10 bg-panel p-4 lg:col-span-2">
         <div className="mb-2 flex items-center gap-3">
-          <span className="sign-loc text-sm">SFO TWR</span>
-          <span className="font-semibold">Ground Truth operator</span>
+          <span className="sign-loc text-sm">SFO Tower</span>
+          <h1 className="font-semibold">Ground Truth operator</h1>
         </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-3xl font-semibold">{ZULU(clock.simT)}</span>
-          <span className="text-sm text-ink-2">{pdt(clock.simT)}</span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-3xl font-semibold tabular-nums">{ZULU(clock.simT)}</span>
+          <span className={`rounded border-2 px-3 py-1 text-lg font-semibold ${clock.playing ? "border-clear text-clear" : "border-ink-2 text-ink"}`}>
+            {clock.playing ? "Playing" : "Paused"} · {clock.speed}x
+          </span>
         </div>
-        <p className="text-lg">{label}</p>
+        <p className="text-lg font-semibold sm:text-xl">{label}</p>
         <p className="text-sm text-ink-2">
-          {clock.playing ? "Playing" : "Paused"} · {clock.speed}x · {ui.agentMode === "live" ? "Live agent" : "Mock agent"} ·{" "}
-          {ui.network === "online" ? "Online" : "Offline"}
+          {pdt(clock.simT)} · {ui.agentMode === "live" ? "Live agent" : "Mock agent"} · {ui.network === "online" ? "Online" : "Offline"} ·
+          Rail {ui.railOpen ? "open" : "closed"}
         </p>
+        {mode === "connecting" && <p className="mt-2 text-sm text-ink-2">Reconnecting to the console server…</p>}
         {mode === "local" && (
           <p className="mt-2 text-sm text-ink-2">This device runs its own copy; it can&apos;t drive another screen on this host.</p>
         )}
       </section>
 
-      <Section title="Scenario">
+      <Section title="Scenarios" className="lg:row-span-2">
         <div className="grid gap-3">
           {SCENARIOS.map((s) => (
             <button key={s.label} aria-pressed={isActive(s)} className={`${btn} text-left`}

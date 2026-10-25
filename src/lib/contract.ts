@@ -192,3 +192,5 @@ export interface AgentAlert {
 }
 
 export const ZULU = (iso: Iso) => iso.slice(11, 19) + "Z";
+/** Station codes as people read them: "TWR" -> "Tower", "GND" -> "Ground"; callsigns pass through. */
+export const spoken = (who: string) => ({ TWR: "Tower", GND: "Ground" } as Record<string, string>)[who] ?? who;

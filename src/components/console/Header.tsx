@@ -1,4 +1,4 @@
-import { SCENARIO_LABEL, ZULU, type WorldState } from "@/lib/contract";
+import { ZULU, type ScenarioId, type WorldState } from "@/lib/contract";
 import { actions } from "@/lib/useWorld";
 import { VIEW_BEARING } from "@/lib/sfo";
 import { AudioControls } from "@/components/audio/AudioLayer";
@@ -15,6 +15,8 @@ const PLANS = [
   { name: "Southeast, 10 arrivals", arr: ["10L", "10R"], dep: ["10L", "10R"] },
 ];
 
+const SCENARIO_CHIP: Partial<Record<ScenarioId, string>> = { incident: "Incident replay", no_clearance: "No clearance", visibility: "Visibility" };
+
 const FRACTION: Record<number, string> = { 0.25: "1/4", 0.5: "1/2", 0.75: "3/4" };
 function vis(sm: number): string {
   const whole = Math.floor(sm), f = FRACTION[sm - whole];
@@ -23,7 +25,7 @@ function vis(sm: number): string {
 
 const Signs = ({ label, rwys }: { label: string; rwys: string[] }) => (
   <span className="flex items-center gap-1.5">
-    <span className="mr-0.5 text-sm font-bold text-ink-2">{label}</span>
+    <span className="w-9 text-sm font-bold text-ink-2">{label}</span>
     {rwys.map((r) => <span key={r} className="sign-loc text-lg">{r}</span>)}
   </span>
 );
@@ -33,27 +35,29 @@ export function Header({ world }: { world: WorldState }) {
   const same = (a: string[], b: string[]) => a.join() === b.join();
   const hw = ws.headwindKt;
   return (
-    <header className="flex h-[76px] gap-px overflow-hidden whitespace-nowrap [&>*]:bg-panel">
-      <div className="flex flex-col justify-center gap-1 px-5">
+    <header className="flex h-[84px] gap-px overflow-hidden whitespace-nowrap [&>*]:bg-panel">
+      <div className="flex flex-col justify-center gap-1 px-4">
         <span className="text-sm font-semibold text-ink-2">Ground Truth</span>
-        <span className="sign-loc self-start text-lg">SFO TWR</span>
+        <span className="sign-loc self-start text-lg">SFO Tower</span>
       </div>
 
-      <div className="flex items-baseline gap-3 self-stretch px-5 pt-3.5">
-        <span className="text-3xl font-bold">{ZULU(clock.simT)}</span>
+      <div className="flex flex-col justify-center gap-1.5 px-4">
+        <span className="text-3xl font-bold leading-none">{ZULU(clock.simT)}</span>
         <span className="text-sm text-ink-2">{LOCAL.format(new Date(clock.simT))}</span>
       </div>
 
-      <div className="flex items-center gap-4 px-5">
-        <Signs label="ARR" rwys={config.arr} />
-        <Signs label="DEP" rwys={config.dep} />
+      <div className="flex items-center gap-4 px-4">
+        <div className="flex flex-col gap-1">
+          <Signs label="ARR" rwys={config.arr} />
+          <Signs label="DEP" rwys={config.dep} />
+        </div>
         <button
           popoverTarget="rwy-config"
           aria-label="Override runway configuration"
           style={{ anchorName: "--rwy-config" }}
           className="flex h-9 items-center gap-1.5 rounded border border-seam px-2.5 text-sm font-semibold text-ink-2 hover:border-ink-2"
         >
-          {config.overridden ? "Overridden" : "Override"} <Chevron />
+          <span className="max-[1600px]:hidden">{config.overridden ? "Overridden" : "Override"}</span> <Chevron />
         </button>
         <div
           id="rwy-config"
@@ -80,7 +84,7 @@ export function Header({ world }: { world: WorldState }) {
         </div>
       </div>
 
-      <div className="flex flex-col justify-center gap-0.5 px-5" title={`Demo landing minimums: ceiling ${ws.minimums.ceiling_ft} ft, visibility ${vis(ws.minimums.visibility_sm)} SM`}>
+      <div className="flex flex-col justify-center gap-0.5 px-4" title={`Demo landing minimums: ceiling ${ws.minimums.ceiling_ft} ft, visibility ${vis(ws.minimums.visibility_sm)} SM`}>
         <span className="flex items-center gap-2 text-base font-semibold">
           {wx.wind_kt ? (
             <>
@@ -91,20 +95,24 @@ export function Header({ world }: { world: WorldState }) {
           <span className="text-ink-2">·</span> {vis(wx.visibility_sm)} SM
           <span className="text-ink-2">·</span> {wx.ceiling_ft == null ? "no ceiling" : `ceiling ${wx.ceiling_ft.toLocaleString("en-US")} ft`}
         </span>
-        <span className="flex items-center gap-3 text-sm text-ink-2">
-          <span>{ws.runway} {hw >= 0 ? `head ${hw}` : `tail ${-hw}`} · cross {ws.crosswindKt} kt</span>
+        <span className="flex items-center gap-2 text-sm text-ink-2">
           {ws.belowMinimums
             ? <span className="flex items-center gap-1.5 font-bold text-caution"><Tri outline /> {ws.runway} below minimums</span>
             : <span>{ws.runway} above minimums</span>}
+          <span className="max-[1600px]:hidden">· {hw >= 0 ? `head ${hw}` : `tail ${-hw}`} · cross {ws.crosswindKt} kt</span>
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-4 px-5">
-        {clock.scenario !== "normal" && <span className="truncate text-sm text-ink-2">{SCENARIO_LABEL[clock.scenario]} · simulated</span>}
-        <AudioControls />
-        <span className="flex items-center gap-2 rounded border-2 border-ink-2 px-2.5 py-1 text-sm font-bold tracking-wider">
-          <Dot filled={ui.network === "online"} /> {ui.network === "online" ? "ONLINE" : "OFFLINE"}
+      <div className="flex min-w-0 flex-1 flex-col items-end justify-center gap-1.5 px-4">
+        <span className="flex items-center gap-2 text-sm font-bold">
+          {SCENARIO_CHIP[clock.scenario] && (
+            <span className="rounded-sm border border-dashed border-ink-2 px-1.5 text-ink-2">SIM · {SCENARIO_CHIP[clock.scenario]}</span>
+          )}
+          <span className="flex items-center gap-2 rounded border-2 border-ink-2 px-2 tracking-wider">
+            <Dot filled={ui.network === "online"} /> {ui.network === "online" ? "ONLINE" : "OFFLINE"}
+          </span>
         </span>
+        <AudioControls />
       </div>
     </header>
   );

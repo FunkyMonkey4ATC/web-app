@@ -23,6 +23,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
   const endReal = new Map<string, number>(); // call id -> real ms the call ended; alert latency counts from here
   const open = new Map<string, Alert>();     // detection key -> its active alert
   const latencies: number[] = [];
+  const unevaluated = new Set<string>();     // calls checked since the last evaluate(): only a detection one of them raises gets a latency
   let active: ActiveClearances = {}, pending: RawCall[] = [];
   let simMs = 0, prevMs = 0, lastReal = Date.now(), ticks = 0, epoch = 0, seq = 0, holdEval = false;
   let timer: ReturnType<typeof setInterval> | undefined;
@@ -48,7 +49,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
 
   function load(scenario: ScenarioId, ending?: "with" | "without") {
     epoch++; // late pipeline results from the previous run are dropped
-    active = {}; pending = []; open.clear(); endReal.clear(); holdEval = false;
+    active = {}; pending = []; open.clear(); endReal.clear(); unevaluated.clear(); holdEval = false;
     ending = scenario === "incident" ? ending ?? "with" : undefined;
     sim.load(scenario, ending);
     simMs = at(sim.startT());
@@ -79,7 +80,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
     pending = pending.filter((r) => at(r.endT) > simMs);
     for (const raw of due) {
       endReal.set(raw.id, Math.max(lastReal, real - (simMs - at(raw.endT)) / speed));
-      void run(raw);
+      void run(raw).catch((err) => console.error("call failed", raw.id, err)); // a bad agent reply must never take the server down
     }
     lastReal = real;
     if (++ticks % (1000 / TICK_MS) === 0) evaluate();
@@ -89,8 +90,11 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
 
   function put(c: Call) {
     const i = world.calls.findIndex((x) => x.id === c.id);
-    if (i >= 0) world.calls[i] = c;
-    else { world.calls.unshift(c); world.calls.splice(MAX_CALLS); world.stats.calls++; }
+    if (i >= 0) { world.calls[i] = c; return; }
+    const j = world.calls.findIndex((x) => x.t < c.t); // newest first by call time: replayed pipelines finish in any order
+    world.calls.splice(j < 0 ? world.calls.length : j, 0, c);
+    world.calls.splice(MAX_CALLS);
+    world.stats.calls++;
   }
 
   async function run(raw: RawCall, mic?: { audio: ArrayBuffer; mime: string }) {
@@ -127,6 +131,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
       call = { ...call, rules, verdict: rules.every((r) => r.pass) ? "ok" : "caution", stages: { ...call.stages, check: { ms: Date.now() - t0, ok: true } } };
     }
     put(call);
+    unevaluated.add(call.id);
     evaluate(); // right away, not at the next 1 s check, so the alert follows the call
     strips();
     emit();
@@ -145,19 +150,22 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
       };
       const known = open.get(d.key);
       if (known) { Object.assign(known, live); continue; }
-      const end = d.triggerCallId ? endReal.get(d.triggerCallId) : undefined;
+      // a detection raised later by a changed condition (weather, an arrival reaching 5 NM) has no call to count from
+      const end = d.triggerCallId && unevaluated.has(d.triggerCallId) ? endReal.get(d.triggerCallId) : undefined;
       const alert: Alert = {
         id: `A${++seq}`, t: world.clock.simT, conflict: d.conflict, text: d.text, callId: d.triggerCallId,
         latencyMs: end === undefined ? null : Math.round(real - end), status: "active", ...live,
       };
       open.set(d.key, alert);
       world.alerts.unshift(alert);
+      if (d.banner && hide) continue; // "without Ground Truth": kept only so the console can time its fade; nobody is told
       world.stats.alerts++;
       if (alert.latencyMs !== null) latencies.push(alert.latencyMs);
       const call = world.calls.find((c) => c.id === d.triggerCallId);
       if (call) Object.assign(call, { alertId: alert.id, verdict: alert.level });
       void judge(alert);
     }
+    unevaluated.clear();
     for (const [key, a] of open) if (!seen.has(key)) { a.status = "resolved"; open.delete(key); }
     const all = world.alerts;
     world.alerts = [...all.filter((a) => a.status === "active"), ...all.filter((a) => a.status === "resolved").slice(0, 10)];
@@ -244,7 +252,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
     start() {
       if (timer) return;
       lastReal = Date.now();
-      timer = setInterval(tick, TICK_MS);
+      timer = setInterval(() => { try { tick(); } catch (err) { console.error("tick failed", err); } }, TICK_MS);
     },
     stop() { clearInterval(timer); timer = undefined; },
   };

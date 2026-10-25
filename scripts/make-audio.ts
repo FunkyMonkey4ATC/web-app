@@ -16,7 +16,8 @@ const calls = new Map<string, RawCall>();
 for (const [scenario, ending] of runs) {
   sim.load(scenario, ending);
   const from = new Date(Date.parse(sim.startT()) - 1).toISOString(); // callsBetween excludes fromT; keep a call at t=0
-  for (const c of sim.callsBetween(from, sim.endT())) calls.set(c.id, c);
+  // normal-loop calls nrmNN-k share one clip nrmNN, like the sim's audio ids
+  for (const c of sim.callsBetween(from, sim.endT())) calls.set(c.id.replace(/^(nrm\d+)-\d+$/, "$1"), { ...c, id: c.id.replace(/^(nrm\d+)-\d+$/, "$1") });
 }
 
 mkdirSync(OUT, { recursive: true });

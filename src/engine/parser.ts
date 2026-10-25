@@ -5,6 +5,10 @@ const DIGIT: Record<string, string> = {
   zero: "0", one: "1", two: "2", three: "3", tree: "3", four: "4", five: "5", fife: "5",
   six: "6", seven: "7", eight: "8", nine: "9", niner: "9",
 };
+const TENS: Record<string, string> = { twenty: "2", thirty: "3", forty: "4", fifty: "5", sixty: "6", seventy: "7", eighty: "8", ninety: "9" };
+const TEENS: Record<string, string> = {
+  ten: "10", eleven: "11", twelve: "12", thirteen: "13", fourteen: "14", fifteen: "15", sixteen: "16", seventeen: "17", eighteen: "18", nineteen: "19",
+};
 const TELEPHONY: Record<string, string> = {
   bayline: "BYL", "fog express": "FGX", tamal: "TML", rescue: "RESCUE", ops: "OPS",
   united: "UAL", american: "AAL", delta: "DAL", alaska: "ASA", southwest: "SWA", skywest: "SKW",
@@ -27,9 +31,25 @@ const CALLSIGN_RE = new RegExp(`\\b(${Object.keys(TELEPHONY).join("|")})\\s+(\\d
 const TAXIWAY_RE = new RegExp(`\\b(?:at|via|taxiway)\\s+(${PHONETIC.replace(/ /g, "|")})(?:\\s+(\\d))?\\b`);
 const RUNWAY_RE = /\b0?(\d{1,2})\s*(left|right|center)\b/; // every SFO runway has a side, so "wind 280 at 12" never reads as one
 
-function first(x: string): Action | undefined {
+/** Spoken numbers as digits: "six forty-six" -> "646", "two eight" -> "28", never across a comma. */
+const digits = (lower: string) => lower
+  .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[- ](one|two|three|four|five|six|seven|eight|nine))?\b/g, (_, t, u) => TENS[t] + (u ? DIGIT[u] : "0"))
+  .replace(new RegExp(`\\b(${Object.keys(TEENS).join("|")})\\b`, "g"), (w) => TEENS[w])
+  .replace(/\b(zero|one|two|three|tree|four|five|fife|six|seven|eight|nine|niner)\b/g, (w) => DIGIT[w])
+  .replace(/\b\d+(?:\s+\d+)+\b/g, (m) => m.replace(/\s+/g, ""));
+
+/** Any spelling of a callsign ("Fog Express 77", "FGX 77", "fgx77") as the track callsign "FGX77". */
+export function normCallsign(s: string): string {
+  const m = digits(s.toLowerCase()).match(CALLSIGN_RE);
+  return m ? TELEPHONY[m[1]] + m[2] : s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function first(x: string, controller: boolean): Action | undefined {
   let best: Action | undefined, at = Infinity;
-  for (const [a, re] of ACTIONS) { const i = x.search(re); if (i >= 0 && i < at) { at = i; best = a; } }
+  for (const [a, re] of ACTIONS) {
+    if (controller && a === "clear_of_runway") continue; // "report clear of" from tower is a request, not a report
+    const i = x.search(re); if (i >= 0 && i < at) { at = i; best = a; }
+  }
   return best;
 }
 const runwayIn = (x: string) => { const m = x.match(RUNWAY_RE); return m ? m[1] + m[2][0].toUpperCase() : undefined; };
@@ -38,14 +58,12 @@ const taxiwayIn = (x: string) => { const m = x.match(TAXIWAY_RE); return m ? m[1
 /** null when the text holds no instruction (tower) and nothing recognisable (pilot). */
 export function parseText(text: string, ctx: { t: Iso; speaker: Clearance["speaker"] }): Clearance | null {
   const raw = text.toLowerCase();
-  const s = raw
-    .replace(/\b(zero|one|two|three|tree|four|five|fife|six|seven|eight|nine|niner)\b/g, (w) => DIGIT[w])
-    .replace(/\b\d+(?:\s+\d+)+\b/g, (m) => m.replace(/\s+/g, "")); // "two eight" -> "28", never across a comma
+  const s = digits(raw);
   const tail = s.split(/\bcorrection\b/).pop()!; // after "correction" the corrected words win
   const cm = s.match(CALLSIGN_RE);
   const callsign = cm ? TELEPHONY[cm[1]] + cm[2] : "";
-  const found = first(tail) ?? first(s);
   const controller = ctx.speaker === "tower" || ctx.speaker === "ground";
+  const found = first(tail, controller) ?? first(s, controller);
   if (controller ? !found : !found && !callsign) return null;
   const action: Action = controller ? found! : found === "clear_of_runway" ? found : "readback";
   const runway = runwayIn(tail) ?? runwayIn(s);

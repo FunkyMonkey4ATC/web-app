@@ -36,6 +36,9 @@ const evidence = (...es: Entry[]) => es.flatMap((e) => (e.clearance.audio ? [e.c
 const below = (w: Weather) => w.visibility_sm < MINIMUMS.visibility_sm || (w.ceiling_ft !== null && w.ceiling_ft < MINIMUMS.ceiling_ft);
 const wx = (w: Weather) => `visibility ${w.visibility_sm} SM, ceiling ${w.ceiling_ft === null ? "none" : `${w.ceiling_ft} ft`}`;
 const runwayName = (w: WorldState, r: Runway) => r.ends.find((e) => w.config.arr.includes(e.name) || w.config.dep.includes(e.name))?.name ?? r.id;
+/** A low-confidence instruction to `cs` heard in (from, to): what it said is unknown, so a readback can't be compared. */
+const unsure = (w: WorldState, cs: string, from: string, to: string) =>
+  w.calls.some((c) => c.lowConfidence && c.clearance && c.clearance.action !== "readback" && c.clearance.callsign === cs && c.t > from && c.t < to);
 const nearRunway = (p: LonLat) =>
   RUNWAYS.some((r) => { const { along, off } = runwayCoords(p, r); return Math.abs(off) < 200 && along > -200 && along < r.lengthM + 200; });
 
@@ -105,6 +108,7 @@ export const createAirfield: CreateAirfield = () => {
     inside: new Set<string>(),                  // `${trackId}|${runwayId}` entered with a clearance: allowed until it leaves
     entered: new Set<string>(),                 // callIds of crossing/takeoff clearances whose track has been in the zone
     latched: new Map<string, [Entry, Entry]>(), // firing rule 1 pairs [crosser, arrival], kept through "hold position"
+    heard: new Set<string>(),                   // callsigns heard on frequency: rule 2 stays armed after their calls scroll out of w.calls
   });
   let m = fresh();
 
@@ -172,7 +176,7 @@ export const createAirfield: CreateAirfield = () => {
 
   function rule2(w: WorldState, active: ActiveClearances, t: Track): Found {
     const cs = t.callsign, name = spoken(cs);
-    const heard = !!active[cs] || w.calls.some((c) => c.from === cs || c.to === cs || c.clearance?.callsign === cs);
+    const heard = !!active[cs] || m.heard.has(cs) || w.calls.some((c) => c.from === cs || c.to === cs || c.clearance?.callsign === cs);
     if (t.source !== "simulated" && !heard) return { why: "R2 not armed: no radio for this aircraft" };
     const zones = zonesOf(t);
     if (!zones.length) return { why: `${name} is outside every runway zone` };
@@ -205,7 +209,7 @@ export const createAirfield: CreateAirfield = () => {
 
   function rule4(w: WorldState, e: Entry): Detection | null {
     const rb = readbackOf(w, e), d = rb && mismatch(rb.clearance!, e.clearance);
-    if (!rb || !d) return null;
+    if (!rb || !d || unsure(w, e.clearance.callsign, tOf(w, e.callId), rb.t)) return null;
     const ins = e.clearance, cs = ins.callsign, t = trackOf(w, cs);
     return {
       key: `readback_mismatch|${ins.runway ?? ""}|${cs}|${rb.id}`,
@@ -238,7 +242,8 @@ export const createAirfield: CreateAirfield = () => {
       const r1 = [...pairs(act).values()].filter(([x, l]) => x.callId === call.id || l.callId === call.id).map((p) => rule1(w, ...p));
       const hit = r1.find((r) => r.d);
       const r2: Found = t ? rule2(w, act, t) : { why: `no track for ${spoken(c.callsign)}` };
-      const lo = below(w.weather), d4 = c.action === "readback" && ins ? mismatch(c, ins.clearance) : null;
+      const vague = c.action === "readback" && !!ins && unsure(w, c.callsign, tOf(w, ins.callId), call.t);
+      const lo = below(w.weather), d4 = c.action === "readback" && ins && !vague ? mismatch(c, ins.clearance) : null;
       return [
         {
           rule: "crossing_on_landing_runway", pass: !hit,
@@ -251,7 +256,7 @@ export const createAirfield: CreateAirfield = () => {
         },
         {
           rule: "readback_mismatch", pass: !d4,
-          why: c.action !== "readback" ? "not a readback" : !ins ? "no instruction to compare" : d4 ? `read back ${d4[0]}, instruction was ${d4[1]}` : `matches ${shorthand(ins.clearance)}`,
+          why: c.action !== "readback" ? "not a readback" : !ins ? "no instruction to compare" : vague ? "the latest instruction was low confidence: nothing to compare" : d4 ? `read back ${d4[0]}, instruction was ${d4[1]}` : `matches ${shorthand(ins.clearance)}`,
         },
       ];
     },
@@ -260,6 +265,7 @@ export const createAirfield: CreateAirfield = () => {
       const now = Date.parse(w.clock.simT);
       if (now < m.lastMs) m = fresh();
       m.lastMs = now;
+      for (const c of w.calls) for (const cs of [c.from, c.to, c.clearance?.callsign]) if (cs) m.heard.add(cs);
       for (const t of w.tracks) {
         const zones = zonesOf(t), e = active[t.callsign];
         for (const r of RUNWAYS) {
@@ -312,7 +318,7 @@ export const createAirfield: CreateAirfield = () => {
         const last = w.calls.find((c) => c.clearance?.callsign === cs || c.from === cs || c.to === cs);
         // a low-confidence call never enters `active`, but the strip shows what was heard, flagged by its confidence
         const shown = last?.lowConfidence && last.clearance && last.clearance.action !== "readback" ? last.clearance : e?.clearance;
-        const alerts = w.alerts.filter((a) => a.status === "active" && (a.partyTrackIds.includes(t.id) || a.conflict.parties.includes(cs)));
+        const alerts = w.alerts.filter((a) => a.status === "active" && a.banner && (a.partyTrackIds.includes(t.id) || a.conflict.parties.includes(cs)));
         const arr = bay === "arriving" ? approachEnd(w, t, e?.clearance) : undefined;
         const apron = bay === "at_gate" ? APRONS.find((ap) => inRing(p, ap.ring)) : undefined;
         strips.push({

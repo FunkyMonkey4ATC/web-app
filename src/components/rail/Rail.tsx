@@ -1,7 +1,7 @@
 "use client";
 // Demo-only pipeline rail: every call from audio to verdict. Overlays the strip column; the parent must be `relative overflow-hidden`.
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { ZULU, type Alert, type Call, type OutboxItem, type RuleId, type Stage, type WorldState } from "@/lib/contract";
+import { ZULU, spoken, type Alert, type Call, type OutboxItem, type RuleId, type Stage, type WorldState } from "@/lib/contract";
 import { jsonTokens, secs, waveform, type Tok } from "./format";
 
 const RULES: Record<RuleId, [number, string]> = {
@@ -44,7 +44,7 @@ export function Rail({ world, open, onClose }: { world: WorldState; open: boolea
     <section
       aria-labelledby={`${id}-h`}
       inert={!open}
-      className={`absolute inset-0 z-20 flex flex-col border-l border-seam bg-panel transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "translate-x-0" : "translate-x-full"}`}
+      className={`@container absolute inset-0 z-20 flex flex-col border-l border-seam bg-panel transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "translate-x-0" : "translate-x-full"}`}
     >
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-seam px-4">
         <h2 id={`${id}-h`} className="text-lg font-bold">Pipeline</h2>
@@ -54,7 +54,7 @@ export function Rail({ world, open, onClose }: { world: WorldState; open: boolea
         </button>
       </header>
 
-      <dl className="grid shrink-0 grid-cols-6 gap-px border-b border-seam bg-seam">
+      <dl className="grid shrink-0 grid-cols-3 gap-px @xl:grid-cols-6 border-b border-seam bg-seam">
         {stats.map(([label, value]) => (
           <div key={label} className="flex flex-col bg-panel px-3 py-2">
             <dt className="order-last text-xs leading-tight text-ink-2">{label}</dt>
@@ -112,8 +112,8 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
       <h3 className="text-base font-normal">
         <button aria-expanded={open} onClick={onToggle} className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-raised">
           <span className="shrink-0 text-ink-2">{ZULU(call.t)}</span>
-          <span className="shrink-0 font-bold">{call.from} → {call.to}</span>
-          <span className="truncate text-ink-2">{actionText(call)}</span>
+          <span className="shrink-0 font-bold">{spoken(call.from)} → {spoken(call.to)}</span>
+          <span title={actionText(call)} className="truncate text-ink-2">{actionText(call)}</span>
           <span className={`ml-auto shrink-0 font-bold ${vCls}`}>{vShort}</span>
           <svg aria-hidden viewBox="0 0 12 12" className={`size-3 shrink-0 text-ink-2 ${open ? "rotate-180" : ""}`}>
             <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -156,7 +156,7 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
                   ))}
                 </div>
                 {raw ? (
-                  <pre className="whitespace-pre-wrap break-words rounded border border-seam bg-ground p-3 font-mono text-sm leading-snug">
+                  <pre className="overflow-x-auto whitespace-pre rounded border border-seam bg-ground p-3 font-mono text-sm leading-snug">
                     {jsonTokens(c).map((t, i) => <span key={i} className={TOK[t.k]}>{t.s}</span>)}
                   </pre>
                 ) : (
@@ -235,7 +235,7 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
 
 function Row({ label, ms, children }: { label: string; ms?: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[7rem_1fr_4.5rem] gap-3 border-t border-seam py-2.5 first:border-t-0">
+    <div className="grid grid-cols-[6rem_1fr_4rem] gap-3 border-t border-seam py-2.5 first:border-t-0">
       <h4 className={`pt-0.5 text-sm ${CAPS}`}>{label}</h4>
       <div className="min-w-0">{children}</div>
       <span className="pt-0.5 text-right text-sm text-ink-3">{ms}</span>

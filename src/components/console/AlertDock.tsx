@@ -38,14 +38,14 @@ function Banner({ a }: { a: Alert }) {
           {a.response ? (
             <span className="font-semibold text-ink">{a.response === "ack" ? "Acknowledged" : "Marked as false alarm"}</span>
           ) : (
-            <button onClick={() => actions.feedback(a.id, "ack")} className="flex h-10 items-center gap-3 rounded bg-ink px-3.5 text-base font-semibold text-ground">
+            <button onClick={() => actions.feedback(a.id, "ack")} className="flex h-10 shrink-0 items-center gap-3 rounded bg-ink px-3.5 text-base font-semibold text-ground">
               Acknowledge <Kbd k="A" />
             </button>
           )}
           {a.countdown && <span className="text-base font-bold text-ink">{a.countdown.label}</span>}
           <span>{a.latencyMs != null && `alert ${(a.latencyMs / 1000).toFixed(1)} s after the call · `}{ZULU(a.t)}</span>
           {!a.response && (
-            <button onClick={() => actions.feedback(a.id, "false_alarm")} className="ml-auto flex h-10 items-center gap-3 rounded border border-ink-2 px-3.5 text-base font-semibold text-ink">
+            <button onClick={() => actions.feedback(a.id, "false_alarm")} className="ml-auto flex h-10 shrink-0 items-center gap-3 rounded border border-ink-2 px-3.5 text-base font-semibold text-ink">
               False alarm <Kbd k="F" />
             </button>
           )}

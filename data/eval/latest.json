@@ -1,80 +1,19 @@
 {
-  "ranAt": "2026-10-25T21:41:42.314Z",
+  "ranAt": "2026-10-25T22:35:02.690Z",
   "agent": "mock, zero delay",
   "tickMs": 250,
   "scenarios": [
     {
       "id": "normal",
       "label": "Normal traffic",
-      "simMinutes": 25.9,
-      "calls": 60,
-      "clearances": 60,
+      "simMinutes": 29.9,
+      "calls": 70,
+      "clearances": 70,
       "lowConfidence": 0,
-      "warnings": 5,
+      "warnings": 0,
       "cautions": 5,
-      "realS": 2.162,
-      "warningDetail": [
-        {
-          "rule": "crossing_on_landing_runway",
-          "runway": "28R",
-          "parties": [
-            "BYL214",
-            "FGX77"
-          ],
-          "simT": "2026-10-25T21:15:04.241Z",
-          "callEndToDetectS": 0.041,
-          "zoneEntryToDetectS": null,
-          "countdownS": 48
-        },
-        {
-          "rule": "crossing_on_landing_runway",
-          "runway": "28R",
-          "parties": [
-            "BYL214",
-            "FGX77"
-          ],
-          "simT": "2026-10-25T21:20:04.241Z",
-          "callEndToDetectS": 0.041,
-          "zoneEntryToDetectS": null,
-          "countdownS": 48
-        },
-        {
-          "rule": "crossing_on_landing_runway",
-          "runway": "28R",
-          "parties": [
-            "BYL214",
-            "FGX77"
-          ],
-          "simT": "2026-10-25T21:25:04.241Z",
-          "callEndToDetectS": 0.041,
-          "zoneEntryToDetectS": null,
-          "countdownS": 48
-        },
-        {
-          "rule": "crossing_on_landing_runway",
-          "runway": "28R",
-          "parties": [
-            "BYL214",
-            "FGX77"
-          ],
-          "simT": "2026-10-25T21:30:04.241Z",
-          "callEndToDetectS": 0.041,
-          "zoneEntryToDetectS": null,
-          "countdownS": 48
-        },
-        {
-          "rule": "crossing_on_landing_runway",
-          "runway": "28R",
-          "parties": [
-            "BYL214",
-            "FGX77"
-          ],
-          "simT": "2026-10-25T21:35:04.241Z",
-          "callEndToDetectS": 0.041,
-          "zoneEntryToDetectS": null,
-          "countdownS": 48
-        }
-      ]
+      "realS": 2.861,
+      "warningDetail": []
     },
     {
       "id": "incident",
@@ -85,7 +24,7 @@
       "lowConfidence": 1,
       "warnings": 1,
       "cautions": 0,
-      "realS": 0.281,
+      "realS": 0.25,
       "warningDetail": [
         {
           "rule": "crossing_on_landing_runway",
@@ -104,13 +43,13 @@
     {
       "id": "no_clearance",
       "label": "Vehicle enters a runway with no clearance",
-      "simMinutes": 25.9,
+      "simMinutes": 29.9,
       "calls": 2,
       "clearances": 2,
       "lowConfidence": 0,
       "warnings": 1,
       "cautions": 0,
-      "realS": 1.619,
+      "realS": 1.309,
       "warningDetail": [
         {
           "rule": "runway_incursion_no_clearance",
@@ -129,13 +68,13 @@
     {
       "id": "visibility",
       "label": "Visibility drops below minimums",
-      "simMinutes": 25.9,
+      "simMinutes": 29.9,
       "calls": 2,
       "clearances": 2,
       "lowConfidence": 0,
       "warnings": 1,
       "cautions": 1,
-      "realS": 1.433,
+      "realS": 1.338,
       "warningDetail": [
         {
           "rule": "weather_below_minimums",
@@ -143,15 +82,15 @@
           "parties": [
             "TML412"
           ],
-          "simT": "2026-10-25T21:13:59.248Z",
-          "callEndToDetectS": 0.048,
+          "simT": "2026-10-25T21:13:59.249Z",
+          "callEndToDetectS": 0.049,
           "zoneEntryToDetectS": null,
           "countdownS": null
         }
       ]
     }
   ],
-  "falseWarningsNormal": 5,
+  "falseWarningsNormal": 0,
   "medianStageMs": {
     "stt": 0,
     "parse": 0,

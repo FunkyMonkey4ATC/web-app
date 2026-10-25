@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ZULU } from "@/lib/contract";
+import { ZULU, spoken } from "@/lib/contract";
 import { useWorld } from "@/lib/useWorld";
 import { AirfieldMap } from "@/components/map/AirfieldMap";
 import { Rail } from "@/components/rail/Rail";
@@ -89,8 +89,8 @@ export default function ConsolePage() {
           <footer className="flex h-16 items-center gap-5 bg-panel px-6">
             {c ? (
               <>
-                <span className="text-sm font-bold tracking-wider text-ink-2">{c.freq}</span>
-                <span className="flex items-center gap-1.5 font-semibold text-clear">{c.from}<Arrow rotate={90} />{c.to}</span>
+                <span className="text-sm font-bold tracking-wider text-ink-2">{spoken(c.freq)}</span>
+                <span className="flex items-center gap-1.5 font-semibold text-clear">{spoken(c.from)}<Arrow rotate={90} />{spoken(c.to)}</span>
                 <span className="truncate text-xl font-medium">“{c.text}”</span>
                 <span className="ml-auto text-sm text-ink-2">{ZULU(c.t)}</span>
               </>
