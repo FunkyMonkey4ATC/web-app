@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ground Truth Sign System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Overpass+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--k:#111111;--y:#F2C200;--r:#C8102E;--o:#E07A00;--w:#FFFFFF;--g:#F4F3EF;--m:#55534D;--f:Overpass,"Helvetica Neue",Arial,sans-serif;--fm:"Overpass Mono",Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;height:900px;overflow:hidden;position:relative;background:var(--g);color:var(--k);font-family:var(--f);font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer}
+/* header: a row of airfield signs */
+header{position:absolute;top:0;left:0;width:1440px;height:72px;background:var(--w);border-bottom:3px solid var(--k);display:flex;align-items:center;gap:14px;padding:0 16px}
+.brand{font:800 15px/1 var(--f);letter-spacing:.02em}
+.loc{background:var(--k);color:var(--y);font:900 26px/1 var(--f);letter-spacing:.04em;padding:11px 14px 7px;box-shadow:inset 0 0 0 3px var(--k),inset 0 0 0 5px var(--y)}
+.dir{background:var(--y);color:var(--k);font:900 26px/1 var(--f);padding:8px 10px 5px 12px;border:3px solid var(--k);display:flex;gap:6px;align-items:center}
+.dir svg{margin-top:-3px}
+.clock{font:800 42px/1 var(--f);letter-spacing:-.01em;padding-top:7px;margin-left:4px}
+.edt{font:500 15px/1 var(--fm);color:var(--m);margin:8px 6px 0 -6px}
+.wx{font:700 17px/1.3 var(--f);margin-left:6px}
+.wx span{display:block;font-weight:600;font-size:14px;color:var(--m)}
+.badge{margin-left:auto;border:3px solid var(--k);font:900 15px/1 var(--f);letter-spacing:.1em;padding:9px 12px 6px}
+/* alert dock: mandatory sign + plain sentence */
+.dock{position:absolute;top:84px;left:16px;width:904px;height:140px;background:var(--w);border:4px solid var(--r);display:flex}
+.mand{flex:0 0 136px;background:var(--r);color:var(--w);display:grid;place-items:center;font:900 46px/1 var(--f);padding-top:6px;-webkit-text-stroke:4px var(--k);paint-order:stroke fill}
+.msg{flex:1;padding:12px 16px 12px 20px;display:flex;flex-direction:column;justify-content:space-between}
+h1{margin:0;font:800 30px/1.1 var(--f);letter-spacing:-.005em}
+.row{display:flex;align-items:center;gap:10px}
+.meta{margin-right:auto;white-space:nowrap;display:flex;gap:10px;align-items:center;font:600 16px/1 var(--f);color:var(--m)}
+.btn{height:42px;white-space:nowrap;flex:none;font:800 17px/1 var(--f);border:2px solid var(--k);background:var(--w);color:var(--k);padding:3px 10px 0 14px;display:flex;gap:10px;align-items:center}
+.pri{background:var(--k);color:var(--w)}
+kbd{font:700 13px/1 var(--fm);border:2px solid currentColor;padding:4px 6px 2px}
+.hist{position:absolute;top:224px;left:28px;background:var(--w);border:2px solid var(--k);border-top:0;font:800 14px/1 var(--f);padding:7px 12px 5px}
+.map{position:absolute;top:224px;left:16px}
+.cap{position:absolute;top:844px;left:16px;width:904px;height:56px;border-top:3px solid var(--k);display:flex;align-items:center;gap:18px}
+.spk{font:900 22px/1 var(--f);letter-spacing:.02em}
+q{flex:1;font:italic 700 24px/1 var(--f)}
+.cap .t{font:500 15px var(--fm);color:var(--m)}
+/* strip bays: headers are location signs */
+aside{position:absolute;top:72px;left:936px;width:488px;height:828px;padding-top:12px;display:flex;flex-direction:column;gap:14px}
+.bay{display:flex;flex-direction:column;gap:6px}
+h2{margin:0;display:flex;align-items:center;gap:10px;font:700 15px/1 var(--f);color:var(--m)}
+h2 b{background:var(--k);color:var(--y);font:900 22px/1 var(--f);letter-spacing:.06em;padding:8px 12px 5px;box-shadow:inset 0 0 0 2px var(--k),inset 0 0 0 4px var(--y)}
+h2::after{content:"";flex:1;height:3px;background:var(--k)}
+.s{height:84px;background:var(--w);border:2px solid var(--k);display:grid;grid-template-columns:176px 1fr auto}
+.s>div{padding:8px 12px 5px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.cs{font:900 26px/1 var(--f);border-right:2px solid var(--k)}
+.s i{font:600 14px/1.2 var(--f);font-style:normal;color:var(--m)}
+.mid{font:800 17px/1.2 var(--f)}
+.s .t{font:700 16px/1.2 var(--fm);align-items:flex-end}
+.s .t i{font-family:var(--fm);font-weight:500}
+.w{border:4px solid var(--r)}
+.w .cs{background:var(--r);color:var(--w);border-right:0}
+.w .cs i{color:var(--w)}
+em{font:900 12px/1 var(--f);font-style:normal;letter-spacing:.12em}
+/* vehicle strips carry the checkered vehicle flag on the left edge */
+.v{padding-left:16px;background:conic-gradient(var(--k) 0 25%,var(--w) 0 50%,var(--k) 0 75%,var(--w) 0) 0 0/16px 16px repeat-y,var(--w)}
+.sim{border-style:dashed}
+.sim .cs{color:transparent;-webkit-text-stroke:1.4px var(--k)}
+.sim .cs i{-webkit-text-stroke:0;color:var(--m)}
+.tag{align-self:flex-start;font:800 12px/1 var(--f);letter-spacing:.08em;border:2px solid var(--k);padding:4px 6px 2px}
+/* caution: orange outlined pill, never sign yellow */
+.c{display:inline-flex;align-items:center;gap:6px;border:3px solid var(--o);border-radius:999px;padding:1px 9px 0 2px;font:700 15px/1.3 var(--fm);color:var(--k)}
+.c b{width:20px;height:20px;border-radius:50%;background:var(--o);font:900 14px/22px var(--f);text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Ground Truth</span>
+  <span class="loc">LGA TWR</span>
+  <span class="clock">03:36:44Z</span><span class="edt">23:36:44 EDT</span>
+  <span class="dir">ARR 4<svg width="22" height="22" viewBox="0 0 22 22"><path d="M5 17L17 5M8 5H17V14" fill="none" stroke="#111" stroke-width="3.5"/></svg></span>
+  <span class="dir">DEP 13<svg width="22" height="22" viewBox="0 0 22 22"><path d="M17 17L5 5M14 5H5V14" fill="none" stroke="#111" stroke-width="3.5"/></svg></span>
+  <span class="wx">040° 12 kt · 10 SM · BKN 025<span>RWY 4 above minimums</span></span>
+  <span class="badge">OFFLINE</span>
+</header>
+
+<section class="dock">
+  <div class="mand">4-22</div>
+  <div class="msg">
+    <h1>Rescue 35 is crossing runway 4 while Jazz 646 is landing on it.</h1>
+    <div class="row"><span class="meta">alert 1.1 s after the call · 03:36:42Z</span><button class="btn pri">Acknowledge<kbd>A</kbd></button><button class="btn">False alarm<kbd>F</kbd></button></div>
+  </div>
+</section>
+
+<svg class="map" width="904" height="620" viewBox="0 0 904 620" font-family="Overpass, Helvetica Neue, Arial, sans-serif" font-weight="900" fill="#111">
+  <defs><path id="tw" d="M14 18H76M14 30H76M-34 44H24V30"/><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#C8102E"/></marker></defs>
+  <!-- north-up airfield turned -30deg to the tower-window view; inner rotate(44) aligns a with runway 13/31, b points SW. 96 px = 1 NM -->
+  <g transform="translate(100 0)">
+  <g transform="translate(470 68) rotate(-30)"><g transform="rotate(44)">
+    <g fill="none" stroke="#111" stroke-opacity=".3" stroke-width="2"><rect x="34" y="38" width="44" height="26"/><rect x="86" y="30" width="24" height="44"/><rect x="34" y="72" width="76" height="14"/></g>
+    <use href="#tw" fill="none" stroke="#111" stroke-width="9" stroke-linejoin="round"/><use href="#tw" fill="none" stroke="#F2C200" stroke-width="4.5" stroke-linejoin="round"/>
+    <rect x="-40" y="-7" width="110.6" height="14"/><path d="M-34 0H64" stroke="#fff" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <rect x="-11" y="-37" width="22" height="118.4" fill="#C8102E"/><path d="M-7 -33.2V77.4M7 -33.2V77.4" stroke="#fff" stroke-width="1.5"/><path d="M0 -28V70" stroke="#fff" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <path d="M-15 37V51M15 37V51" stroke="#111" stroke-width="3"/><path d="M-19 37V51M19 37V51" stroke="#111" stroke-width="2" stroke-dasharray="3 2"/>
+    <path d="M0 81.4V557.4" stroke="#111" stroke-width="2"/><path d="M-7 173.4H7M-7 269.4H7M-7 365.4H7M-7 461.4H7M-10 557.4H10" stroke="#111" stroke-width="3"/>
+    <path d="M0 240V52M-18 44H22" stroke="#fff" stroke-width="11" stroke-linecap="round"/>
+    <path d="M0 240V54" stroke="#C8102E" stroke-width="6" marker-end="url(#ah)"/><path d="M-18 44H20" stroke="#C8102E" stroke-width="6" marker-end="url(#ah)"/>
+    <path d="M0 238L8 258L-8 258Z" stroke="#fff" stroke-width="2"/>
+    <rect x="-33" y="37" width="14" height="14" fill="#fff" stroke="#111" stroke-width="2.5" stroke-dasharray="4 2.4"/>
+    <g opacity=".35" stroke-width="2"><path d="M-22 0L-38 -7L-38 7Z" stroke="#fff"/><path d="M52 30L68 23L68 37Z" stroke="#fff"/><path d="M32 18L16 11L16 25Z" fill="#fff" stroke="#111"/></g>
+  </g></g>
+  <g font-size="22" text-anchor="middle"><text x="482" y="24">22</text><text x="468" y="170" text-anchor="start">4</text><text x="420" y="63" text-anchor="end">13</text><text x="548" y="96" text-anchor="start">31</text></g>
+  <rect x="404" y="90" width="20" height="21"/><rect x="406" y="92" width="16" height="17" fill="none" stroke="#F2C200" stroke-width="1.5"/><text x="414" y="107" font-size="15" fill="#F2C200" text-anchor="middle">D</text>
+  <text x="428" y="138" font-size="22" text-anchor="end">RESCUE35 EST</text><text x="428" y="156" font-size="14" font-weight="600" fill="#55534D" text-anchor="end">VEH · RADIO ONLY · from last clearance</text>
+  <path d="M430 182L458 112" stroke="#111" stroke-width="2"/><rect x="160" y="168" width="270" height="42" fill="#C8102E"/><text x="295" y="197" font-size="23" fill="#fff" text-anchor="middle">JZA646 at D in 14 s</text>
+  <text x="428" y="316" font-size="24">JZA646</text><text x="428" y="336" font-size="14" font-weight="600" fill="#55534D">CRJ9 · 1.8 NM · 138 kt · CLRD LAND 4</text>
+  <g font-size="13" font-weight="700" fill="#55534D" text-anchor="end"><text x="408" y="238">1 NM</text><text x="385" y="331">2</text><text x="362" y="424">3</text><text x="339" y="517">4</text><text x="316" y="610">5 NM</text></g>
+  <g opacity=".4" font-size="14" font-weight="800"><text x="455" y="42" text-anchor="end">DAL1203</text><path d="M494 86L596 34M524 108L596 136" stroke="#111" stroke-width="1.5"/><text x="600" y="39">UAL331</text><rect x="660" y="25" width="34" height="18" fill="none" stroke="#111" stroke-width="1.5"/><text x="677" y="39" font-size="11" text-anchor="middle">SIM</text><text x="600" y="141">AAL2187</text></g>
+  </g>
+  <g transform="translate(872 52)"><path d="M0 -20L8 10L0 4L-8 10Z" transform="rotate(-30)"/><text x="-16" y="-26" font-size="14" text-anchor="middle">N</text></g>
+  <g transform="translate(704 486)" font-size="14" font-weight="700"><path d="M-6 6L0 -8L6 6Z"/><text x="18" y="5">Aircraft</text><rect x="-6" y="18" width="12" height="12"/><text x="18" y="29">Vehicle</text><rect x="-6" y="42" width="12" height="12" fill="#fff" stroke="#111" stroke-width="2" stroke-dasharray="3 2"/><text x="18" y="53">EST · radio only, no GPS</text><path d="M-6 78L0 64L6 78Z" fill="#fff" stroke="#111" stroke-width="2"/><text x="18" y="77">SIM · simulated traffic</text><path d="M-6 100H90M-6 94V106M90 94V106" stroke="#111" stroke-width="2.5"/><text x="100" y="105">1 NM</text></g>
+</svg>
+<div class="hist">History (2)</div>
+<div class="cap"><span class="spk">TWR → RESCUE35</span><q>Rescue 35, cross runway 4 at Delta.</q><span class="t">03:36:41Z</span></div>
+
+<aside>
+  <div class="bay"><h2><b>ARRIVING</b>1</h2>
+    <div class="s w"><div class="cs"><em>CONFLICT</em>JZA646<i>CRJ9</i></div><div class="mid">CLRD LAND 4<i>RWY 4 · on final</i></div><div class="t">03:36:21Z<i>1.8 NM 138 kt</i></div></div>
+  </div>
+  <div class="bay"><h2><b>ON RUNWAY</b>2</h2>
+    <div class="s w v"><div class="cs"><em>CONFLICT</em>RESCUE35<i>VEH</i></div><div class="mid">XING 4 @D<span class="tag">RADIO ONLY</span></div><div class="t">03:36:42Z<i>EST</i></div></div>
+    <div class="s"><div class="cs">DAL1203<i>A321</i></div><div class="mid">LUAW 13<i>RWY 13</i></div><div class="t">03:35:58Z</div></div>
+  </div>
+  <div class="bay"><h2><b>TAXI OUT</b>1</h2>
+    <div class="s"><div class="cs">AAL2187<i>B738</i></div><div class="mid">TAXI B → 13<i>via B</i></div><div class="t"><span class="c"><b>?</b>0.68</span>03:36:12Z</div></div>
+  </div>
+  <div class="bay"><h2><b>TAXI IN</b>1</h2>
+    <div class="s sim"><div class="cs">UAL331<i>A320</i></div><div class="mid">TWY A<span class="tag">SIM</span></div><div class="t">03:35:40Z</div></div>
+  </div>
+  <div class="bay"><h2><b>AT GATE</b>1</h2>
+    <div class="s"><div class="cs">SWA1450<i>B737</i></div><div class="mid">C38<i>at gate</i></div><div class="t">03:31:05Z</div></div>
+  </div>
+</aside>
+</body>
+</html>

@@ -1,0 +1,66 @@
+@import "tailwindcss";
+@import "@fontsource-variable/atkinson-hyperlegible-next";
+@import "@fontsource-variable/atkinson-hyperlegible-mono";
+
+/* Graphite working surface + airfield sign identity. Tuned for a projector: lifted ground, 7:1 text, heavy strokes. */
+@theme {
+  --font-sans: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono Variable", ui-monospace, monospace; /* only for raw JSON in the rail */
+
+  --color-ground: #1a1d21;   /* app background, map ground */
+  --color-panel: #22262b;    /* panels */
+  --color-raised: #2a2f35;   /* strips, cards, inputs */
+  --color-seam: #3a4048;     /* 1px hairline seams between panels; never shadows */
+  --color-ink: #f2f4f6;      /* primary text */
+  --color-ink-2: #b9bfc7;    /* secondary text (>= 7:1 on panel) */
+  --color-ink-3: #8a929c;    /* tertiary: dimmed traffic, disabled */
+
+  --color-runway: #4a5059;   /* runway pavement on the map */
+  --color-taxiway: #343a41;  /* taxiway pavement */
+  --color-apron: #262a30;
+  --color-paint: #f2f4f6;    /* runway markings */
+
+  --color-clear: #5ac8fa;    /* clearance ink: active cleared paths, clearance text, info */
+  --color-warn: #ff453a;     /* WARNING only: conflict needing action now */
+  --color-warn-sign: #d92d20;/* mandatory-sign red (white legend) */
+  --color-caution: #ff9f0a;  /* CAUTION only: low confidence, readback mismatch, weather near/below minimums */
+
+  --color-sign-black: #0b0c0e; /* location sign field */
+  --color-sign-yellow: #ffd100;/* location sign legend + border; appears ONLY inside sign panels */
+
+  --text-xs: 0.875rem;   /* 14px, never for anything the controller must read */
+  --text-sm: 1rem;       /* 16px secondary */
+  --text-base: 1.125rem; /* 18px body */
+  --text-lg: 1.375rem;   /* 22px bay headers, header values */
+  --text-xl: 1.625rem;   /* 26px callsigns on strips */
+  --text-2xl: 2rem;      /* 32px alert sentence */
+  --text-3xl: 2.5rem;    /* 40px clock */
+}
+
+:root { color-scheme: dark; }
+html, body { background: var(--color-ground); color: var(--color-ink); }
+body { font-family: var(--font-sans); font-size: var(--text-base); line-height: 1.35; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+
+::selection { background: var(--color-clear); color: var(--color-sign-black); }
+:focus-visible { outline: 3px solid var(--color-clear); outline-offset: 2px; border-radius: 3px; }
+* { scrollbar-width: thin; scrollbar-color: var(--color-seam) transparent; caret-color: var(--color-clear); }
+
+/* Airfield location sign: black field, yellow border, yellow legend. Runway, taxiway and position names. */
+.sign-loc {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-sign-black); color: var(--color-sign-yellow);
+  border: 2px solid var(--color-sign-yellow); border-radius: 2px;
+  font-weight: 800; letter-spacing: 0.02em; line-height: 1; padding: 0.2em 0.4em;
+}
+/* Mandatory runway sign: red field, white legend. Leads every warning. */
+.sign-mand {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-warn-sign); color: #fff;
+  border: 2px solid #fff; outline: 2px solid var(--color-sign-black);
+  font-weight: 800; letter-spacing: 0.02em; line-height: 1; padding: 0.25em 0.5em;
+}
+
+/* Hard two-step state changes; only strips travel when they reorder. */
+@keyframes gt-pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
+.gt-flash { animation: gt-pulse 0.8s steps(2, jump-none) infinite; }
+@media (prefers-reduced-motion: reduce) { .gt-flash { animation: none; } }

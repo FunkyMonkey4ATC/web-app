@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ground Truth Canon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1E2A33;--panel:#26333D;--bar:#172129;--line:#34434E;--text:#D7DEE3;--dim:#A9B8C2;--cyan:#00C2D1;--green:#7BD88F;--red:#E5484D;--amber:#F2A33A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Roboto,sans-serif}
+header{height:72px;display:flex;align-items:center;gap:28px;padding:0 24px;background:var(--bar);border-bottom:2px solid var(--line)}
+header small{display:block;font:500 12px/1.3 Roboto;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.brand{font:700 17px Roboto;display:flex;align-items:center;gap:10px}
+.pos{font:700 15px 'Roboto Mono';border:2px solid #5A6B77;padding:3px 8px;border-radius:4px}
+.clock{font:700 40px/1 'Roboto Mono';display:flex;align-items:baseline;gap:10px}
+.clock span{font:400 16px 'Roboto Mono';color:var(--dim)}
+.cfg{font:700 24px/1.1 'Roboto Mono'}
+.wx{flex:1;font:400 17px/1.3 Roboto}
+.badge{font:700 14px Roboto;letter-spacing:.1em;border:2px solid var(--text);padding:7px 12px;border-radius:4px}
+main{display:flex;height:828px}
+.left{width:936px;position:relative;display:flex;flex-direction:column}
+.dock{height:140px;padding:12px 16px}
+.banner{height:116px;display:grid;grid-template-columns:96px 1fr 214px;background:var(--red);color:#fff;border-radius:6px;overflow:hidden}
+.ico{background:#B5383D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:700 13px Roboto;letter-spacing:.1em}
+.msg{padding:12px 18px;display:flex;flex-direction:column;justify-content:center}
+.msg p{font:700 30px/1.18 Roboto}
+.msg small{font:700 19px/1.5 'Roboto Mono'}
+.act{display:flex;flex-direction:column;justify-content:center;gap:8px;padding-right:14px}
+button{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 16px;font:500 18px Roboto;border-radius:4px;border:2px solid #fff;background:#fff;color:var(--bg)}
+button.ghost{background:var(--bar);color:#fff}
+kbd{font:700 14px 'Roboto Mono';border:2px solid currentColor;border-radius:3px;padding:1px 7px}
+.hist{position:absolute;left:16px;top:140px;z-index:1;font:500 15px Roboto;background:var(--panel);border:2px solid var(--line);border-top:0;border-radius:0 0 4px 4px;padding:4px 14px 6px}
+svg.map{display:block}
+.rwy{fill:#3B4A55;stroke:#7A8B97;stroke-width:2}
+.tw{fill:none;stroke:#2E3B45;stroke-width:13}
+.term{fill:none;stroke:#46565F;stroke-width:2}
+.zone{fill:var(--red);fill-opacity:.62;stroke:var(--red);stroke-width:3}
+.app{fill:none;stroke:var(--dim);stroke-width:2.5}
+.hs{stroke:var(--text);stroke-width:3}
+.des,.db,.tk{paint-order:stroke;stroke:var(--bg);stroke-linejoin:round}
+.des{font:700 24px Roboto;fill:var(--text);text-anchor:middle;dominant-baseline:central;stroke-width:6px}
+.db{font:700 22px 'Roboto Mono';stroke-width:4px}
+.db .l2{font:500 16px 'Roboto Mono'}
+.tk{font:500 14px Roboto;fill:var(--dim);stroke-width:4px}
+.dim{opacity:.42}
+.cap{height:60px;display:flex;align-items:center;gap:18px;padding:0 20px;background:var(--bar);border-top:2px solid var(--line)}
+.who{font:700 16px 'Roboto Mono';color:var(--dim)}
+.quote{font:500 24px Roboto}
+.cap .t{margin-left:auto;font:400 15px 'Roboto Mono';color:var(--dim)}
+aside{width:504px;background:var(--panel);border-left:2px solid var(--line);padding:6px 16px}
+h3{display:flex;justify-content:space-between;font:700 15px Roboto;letter-spacing:.09em;color:var(--dim);margin:12px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+.strip{display:grid;grid-template-columns:136px 1fr auto;align-items:center;gap:12px;min-height:78px;padding:8px 12px 8px 14px;margin-bottom:6px;background:#34434E;border-left:8px solid var(--cyan);border-radius:4px}
+.cs{font:700 26px/1.1 'Roboto Mono'}
+.cs small,.clr small{display:block;font:400 15px/1.4 Roboto;color:var(--dim)}
+.clr{font:500 22px/1.15 'Roboto Mono'}
+.clr small{font-family:'Roboto Mono'}
+.dep{border-left-color:var(--green)}
+.gate{border-left-color:var(--dim)}
+.warn{border-left-color:var(--red);box-shadow:inset 0 0 0 3px var(--red);background:#3B323A}
+.veh{border-left:0;border-radius:0;padding-left:28px;background:repeating-linear-gradient(135deg,var(--red) 0 5px,transparent 5px 10px) left/14px 100% no-repeat,#3B323A}
+.sim{background:transparent;border:2px dashed var(--dim);border-left:8px solid var(--cyan)}
+.tags{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.tag{font:700 14px/1 Roboto;letter-spacing:.06em;padding:6px 8px;border-radius:3px}
+.tag.w{background:#B5383D;color:#fff}
+.tag.e{border:2px dashed var(--text)}
+.tag.s{border:2px solid var(--cyan);color:var(--cyan)}
+.chip{font:700 22px/1 'Roboto Mono';color:var(--amber);border:2px solid var(--amber);border-radius:4px;padding:4px 8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Ground Truth <span class="pos">LGA TWR</span></div>
+  <div class="clock">03:36:44Z <span>23:36:44 EDT</span></div>
+  <div class="cfg"><small>Runway config</small>ARR 4 · DEP 13</div>
+  <div class="wx"><small>Weather</small>040° 12 kt · 10 SM · BKN 025 · RWY 4 above minimums</div>
+  <span class="badge">OFFLINE</span>
+</header>
+<main>
+<section class="left">
+  <div class="dock">
+    <div class="banner">
+      <div class="ico"><svg width="40" height="36" viewBox="0 0 40 36"><path d="M20 2L38 34H2Z" fill="#fff"/><path d="M20 13V23M20 26V30" stroke="#E5484D" stroke-width="4"/></svg>WARNING</div>
+      <div class="msg"><p>Rescue 35 is crossing runway 4 while Jazz 646 is landing on it.</p><small>alert 1.1 s after the call · 03:36:42Z</small></div>
+      <div class="act"><button>Acknowledge <kbd>A</kbd></button><button class="ghost">False alarm <kbd>F</kbd></button></div>
+    </div>
+  </div>
+  <div class="hist">History (2)</div>
+  <svg class="map" width="936" height="628" viewBox="0 0 936 628">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto"><path d="M0,0L10,5L0,10Z" fill="#E5484D"/></marker></defs>
+    <!-- airfield drawn north-up, whole group rotated -30deg to the tower-window view; origin = 4/22 x 13/31 intersection -->
+    <g transform="translate(380 152) rotate(-30)">
+      <g transform="rotate(134)">
+        <path class="tw" d="M50,-45V-255M85,-60V-255M11,-255H85"/>
+        <g class="term"><rect x="130" y="-250" width="60" height="130"/><rect x="210" y="-250" width="40" height="100"/><path d="M130,-230H100M130,-185H100M130,-140H100"/></g>
+        <rect class="rwy" x="-11" y="-260" width="22" height="330"/>
+      </g>
+      <g transform="rotate(44)">
+        <path class="tw" d="M-100,130H50M50,25V225M11,225H50"/>
+        <rect class="rwy" x="-11" y="-110" width="22" height="330"/>
+        <rect class="zone" x="-16" y="-115" width="32" height="340"/>
+        <path class="hs" d="M-24,119V141M24,119V141"/><path class="hs" stroke-dasharray="4 3" d="M-29,119V141M29,119V141"/>
+        <path class="app" d="M0,226V470M-9,270H9M-9,320H9M-9,370H9M-9,420H9M-9,470H9"/>
+        <path d="M0,298V146" stroke="#E5484D" stroke-width="5" marker-end="url(#ar)"/>
+        <path d="M-26,130H38" stroke="#E5484D" stroke-width="4" stroke-dasharray="9 6" marker-end="url(#ar)"/>
+        <circle cx="0" cy="130" r="9" fill="#fff" stroke="#E5484D" stroke-width="4"/>
+      </g>
+    </g>
+    <text class="des" x="319.5" y="394.6">4</text><text class="des" x="412.4" y="22">22</text>
+    <text class="des" x="288.8" y="129.3">13</text><text class="des" x="655.6" y="220.7">31</text>
+    <text class="des" x="232" y="252" text-anchor="end">D</text>
+    <text class="tk" x="332" y="423">1</text><text class="tk" x="320" y="472">2</text><text class="tk" x="308" y="520">3</text><text class="tk" x="296" y="569">4</text><text class="tk" x="284" y="617">5 NM</text>
+    <!-- conflict: JZA646 on final, RESCUE35 estimated at D hold-short -->
+    <path d="M0,-12L9,10L0,5L-9,10Z" fill="#E5484D" transform="translate(305 452.8) rotate(14)"/>
+    <path d="M296,456L238,468" stroke="#E5484D" stroke-width="2"/>
+    <text class="db" x="150" y="470" fill="#E5484D">JZA646<tspan class="l2" x="150" dy="20">CRJ9 138</tspan></text>
+    <rect x="305.6" y="261.4" width="16" height="16" fill="none" stroke="#E5484D" stroke-width="3" stroke-dasharray="4 3" transform="rotate(14 313.6 269.4)"/>
+    <path d="M306,261L262,200" stroke="#E5484D" stroke-width="2"/>
+    <text class="db" x="100" y="188" fill="#E5484D">RESCUE35 EST<tspan class="l2" x="100" dy="20">VEH · RADIO ONLY</tspan></text>
+    <g><rect x="22" y="306" width="276" height="40" rx="4" fill="#E5484D"/><text x="160" y="334" text-anchor="middle" fill="#fff" font-family="Roboto" font-weight="700" font-size="24">JZA646 at D in 14 s</text></g>
+    <g class="dim">
+      <path d="M0,-12L9,10L0,5L-9,10Z" fill="#7BD88F" transform="translate(331.5 139.9) rotate(104)"/>
+      <path d="M324,132L232,84" stroke="#7BD88F" stroke-width="2"/>
+      <text class="db" x="120" y="70" fill="#7BD88F">DAL1203<tspan class="l2" x="120" dy="20">A321 0</tspan></text>
+      <path d="M0,-12L9,10L0,5L-9,10Z" fill="#7BD88F" transform="translate(513.4 236.8) rotate(284)"/>
+      <path d="M524,238L684,238" stroke="#7BD88F" stroke-width="2"/>
+      <text class="db" x="690" y="236" fill="#7BD88F">AAL2187<tspan class="l2" x="690" dy="20">B738 14</tspan></text>
+      <path d="M0,-12L9,10L0,5L-9,10Z" fill="none" stroke="#00C2D1" stroke-width="2.5" transform="translate(587.5 291.3) rotate(104)"/>
+      <rect x="560" y="304" width="38" height="20" rx="2" fill="#1E2A33" stroke="#00C2D1" stroke-width="2"/><text x="579" y="319" text-anchor="middle" fill="#00C2D1" font-family="Roboto" font-weight="700" font-size="13">SIM</text>
+      <path d="M598,294L684,304" stroke="#00C2D1" stroke-width="2"/>
+      <text class="db" x="690" y="306" fill="#00C2D1">UAL331<tspan class="l2" x="690" dy="20">A320 12 SIM</tspan></text>
+    </g>
+    <g transform="translate(892 586) rotate(-30)"><path d="M0,-22L8,8L0,2L-8,8Z" fill="#8FA0AB"/><text y="-30" text-anchor="middle" fill="#8FA0AB" font-family="Roboto" font-weight="700" font-size="16">N</text></g>
+  </svg>
+  <footer class="cap"><span class="who">TWR → RESCUE35</span><span class="quote">“Rescue 35, cross runway 4 at Delta.”</span><span class="t">03:36:42Z</span></footer>
+</section>
+<aside>
+  <h3>ARRIVING <span>1</span></h3>
+  <div class="strip warn"><div class="cs">JZA646<small>CRJ9 · RWY 4</small></div><div class="clr">CLRD LAND 4<small>03:36:21Z<br>1.8 NM · 138 kt</small></div><div class="tags"><span class="tag w">▲ CONFLICT</span></div></div>
+  <h3>ON RUNWAY <span>2</span></h3>
+  <div class="strip warn veh"><div class="cs">RESCUE35<small>VEH · RADIO ONLY</small></div><div class="clr">XING 4 @D<small>03:36:42Z</small></div><div class="tags"><span class="tag w">▲ CONFLICT</span><span class="tag e">EST</span></div></div>
+  <div class="strip dep"><div class="cs">DAL1203<small>A321</small></div><div class="clr">LUAW 13<small>03:35:58Z</small></div><div class="tags"></div></div>
+  <h3>TAXI OUT <span>1</span></h3>
+  <div class="strip dep"><div class="cs">AAL2187<small>B738</small></div><div class="clr">TAXI B → 13<small>03:34:40Z</small></div><div class="tags"><span class="chip">? 0.68</span></div></div>
+  <h3>TAXI IN <span>1</span></h3>
+  <div class="strip sim"><div class="cs">UAL331<small>A320</small></div><div class="clr">TWY A<small>03:33:12Z</small></div><div class="tags"><span class="tag s">SIM</span></div></div>
+  <h3>AT GATE <span>1</span></h3>
+  <div class="strip gate"><div class="cs">SWA1450<small>B737</small></div><div class="clr">C38<small>03:21:05Z</small></div><div class="tags"></div></div>
+</aside>
+</main>
+</body>
+</html>

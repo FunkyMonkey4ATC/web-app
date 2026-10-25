@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Graphite Ops Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#16181B;--panel:#1D2024;--raised:#24272C;--seam:#2E3238;--text:#E6E8EB;--text2:#A7ADB5;--info:#5AC8FA;--warn:#FF453A;--caution:#FFB020;--rwy:#3A3F46;--twy:#5A616B}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--ground)}
+body{width:1440px;height:900px;overflow:hidden;display:grid;grid-template-columns:936px 503px;grid-template-rows:64px 835px;gap:1px;background:var(--seam);color:var(--text);font:400 15px/1.3 Inter,sans-serif;font-variant-numeric:tabular-nums}
+.mono{font-family:"JetBrains Mono",monospace}
+.sc{font-variant-caps:all-small-caps;letter-spacing:.06em;font-weight:600;color:var(--text2)}
+header{grid-column:1/3;display:grid;grid-template-columns:170px 370px 394px 351px 150px;gap:1px}
+header>div{white-space:nowrap;background:var(--panel);display:flex;align-items:center;gap:12px;padding:0 20px}
+.brand{flex-direction:column;align-items:flex-start!important;justify-content:center;gap:0!important}
+.brand small{font-size:14px;font-weight:600;color:var(--text2)}
+.clock{font-size:36px;font-weight:600;letter-spacing:-.01em}
+.d22{font-size:22px;font-weight:600}
+.wx{flex-direction:column;align-items:flex-start!important;justify-content:center;gap:2px!important;font-size:14px}
+.badge{border:1px solid var(--text2);border-radius:3px;padding:3px 10px;font:600 13px "JetBrains Mono",monospace;letter-spacing:.08em}
+.ghostlink{margin-left:auto;font-size:13px;color:var(--text2);border:1px solid var(--seam);border-radius:3px;padding:3px 8px}
+.left{display:grid;grid-template-rows:168px 32px 1fr 64px;gap:1px}
+.dock{display:grid;grid-template-columns:10px 1fr;background:linear-gradient(rgba(255,69,58,.10),rgba(255,69,58,.10)),var(--panel)}
+.dock .band{background:var(--warn)}
+.dock .body{padding:12px 24px 12px 22px}
+.kind{font-size:14px;color:var(--warn);font-weight:700;letter-spacing:.06em;font-variant-caps:all-small-caps}
+.kind span{color:var(--text2);font-weight:500}
+h1{font-size:30px;line-height:1.15;font-weight:600;margin:4px 0 10px;letter-spacing:-.01em}
+.actions{display:flex;align-items:center;gap:16px}
+.btn{height:36px;padding:0 12px 0 14px;border-radius:4px;font:600 15px Inter,sans-serif;display:inline-flex;align-items:center;gap:12px;border:1px solid var(--text2);color:var(--text);background:transparent}
+.btn.primary{background:var(--text);color:var(--ground);border-color:var(--text)}
+kbd{font:600 12px "JetBrains Mono",monospace;border:1px solid currentColor;border-radius:3px;padding:0 5px;opacity:.7}
+.meta{font-size:14px;color:var(--text2)}
+.spacer{flex:1}
+.hist{background:var(--ground);padding-left:32px}
+.tab{display:inline-flex;align-items:center;gap:8px;height:31px;padding:0 14px;background:var(--panel);border:1px solid var(--seam);border-top:0;font-size:14px;color:var(--text2)}
+.map{background:var(--ground);overflow:hidden}
+.caption{background:var(--panel);display:flex;align-items:center;gap:20px;padding:0 24px}
+.who{color:var(--info);font:600 15px "JetBrains Mono",monospace}
+.quote{font-size:24px;font-weight:500}
+.bays{display:flex;flex-direction:column;gap:1px}
+.bay{background:var(--panel);padding:0 12px 10px}
+.bay:last-child{flex:1}
+.bay h2{font-size:22px;height:38px;display:flex;align-items:center;justify-content:space-between}
+.bay h2 b{font:500 14px "JetBrains Mono",monospace;color:var(--text2);font-variant-caps:normal}
+.strip{display:grid;grid-template-columns:8px 1fr auto;height:78px;background:var(--raised);border:1px solid var(--seam);border-radius:4px;overflow:hidden}
+.strip+.strip{margin-top:6px}
+.strip .band{background:var(--rwy)}
+.strip .main,.strip .side{padding:9px 14px;display:flex;flex-direction:column;justify-content:space-between}
+.strip .side{text-align:right;align-items:flex-end}
+.cs{font:700 24px "JetBrains Mono",monospace;display:flex;align-items:center;gap:10px}
+.cs small{font:500 15px "JetBrains Mono",monospace;color:var(--text2)}
+.ln{font:500 15px "JetBrains Mono",monospace;color:var(--text2)}
+.clr{color:var(--info)}
+.side .d22{font-family:"JetBrains Mono",monospace}
+.strip.warn{border:2px solid var(--warn)}
+.strip.warn .band{background:var(--warn)}
+.tag{font:700 12px "JetBrains Mono",monospace;letter-spacing:.06em;border:1px solid var(--text2);border-radius:2px;padding:1px 5px;color:var(--text2)}
+.tag.w{background:var(--warn);border-color:var(--warn);color:var(--ground)}
+.tag.c{border-color:var(--caution);color:var(--caution)}
+.strip.veh{border-radius:0}
+.strip.veh .band{background:repeating-linear-gradient(45deg,var(--warn) 0 4px,transparent 4px 8px)}
+.vbox{font:700 12px "JetBrains Mono",monospace;border:2px solid var(--text);padding:1px 4px;letter-spacing:.06em}
+.strip.sim{border-style:dashed;border-color:var(--text2)}
+.strip.sim .band{background:transparent;border-right:2px solid var(--text2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><small>Ground Truth</small><span class="mono d22">LGA TWR</span></div>
+  <div><span class="mono clock">03:36:44Z</span><span class="mono" style="color:var(--text2)">23:36:44 EDT</span></div>
+  <div><span class="sc">Runway config</span><span class="mono d22">ARR 4 · DEP 13</span><span class="ghostlink">▾</span></div>
+  <div class="wx"><span class="mono">040° 12 kt · 10 SM · BKN 025</span><span style="color:var(--text2)">RWY 4 above minimums</span></div>
+  <div style="justify-content:center"><span class="badge">○ OFFLINE</span></div>
+</header>
+<div class="left">
+  <section class="dock">
+    <div class="band"></div>
+    <div class="body">
+      <div class="kind">▲ Warning <span>· rule 1 · crossing clearance on a landing runway</span></div>
+      <h1>Rescue 35 is crossing runway 4<br>while Jazz 646 is landing on it.</h1>
+      <div class="actions">
+        <span class="btn primary">Acknowledge <kbd>A</kbd></span>
+        <span class="meta mono">alert 1.1 s after the call · 03:36:42Z</span>
+        <span class="spacer"></span>
+        <span class="btn">False alarm <kbd>F</kbd></span>
+      </div>
+    </div>
+  </section>
+  <div class="hist"><span class="tab">History (2) <span>▾</span></span></div>
+  <section class="map">
+    <svg width="936" height="569" viewBox="0 0 936 569" font-family="JetBrains Mono, monospace">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#FF453A"/></marker></defs>
+      <text x="24" y="30" font-family="Inter" font-size="14" font-weight="600" fill="#A7ADB5" letter-spacing=".06em" style="font-variant-caps:all-small-caps">Airfield · tower view</text>
+      <!-- whole map rotated -30deg to the cab-window view; inner rotate(44) puts runway 4/22 on the local y axis -->
+      <g transform="rotate(-30 380 240)"><g transform="translate(380 240) rotate(44)">
+        <g fill="#1D2024" stroke="#2E3238" stroke-width="2"><rect x="84" y="14" width="90" height="62"/><rect x="194" y="14" width="110" height="76"/><rect x="324" y="-12" width="64" height="112"/></g>
+        <path d="M0,0V800" stroke="#A7ADB5" stroke-width="2"/>
+        <path d="M-12,160H12M-12,320H12M-12,480H12M-12,640H12M-12,800H12" stroke="#A7ADB5" stroke-width="3"/>
+        <path d="M-90,-55H52M52,10V-150M52,-90H240M52,-20H290M130,-20V14M250,-20V14" stroke="#5A616B" stroke-width="5" fill="none"/>
+        <rect x="-9" y="-184" width="18" height="184" fill="#3A3F46"/>
+        <rect x="-46" y="-138" width="184" height="18" fill="#3A3F46"/>
+        <path d="M0,-180V-4M-42,-129H134" stroke="#6B717A" stroke-width="1.5" stroke-dasharray="8 6"/>
+        <rect x="-24" y="-196" width="48" height="208" fill="#FF453A" fill-opacity=".24" stroke="#FF453A" stroke-width="3"/>
+        <path d="M-26,-66V-44M-30,-66V-44M26,-66V-44M30,-66V-44" stroke="#E6E8EB" stroke-width="2.5"/>
+        <path d="M0,270V-44" stroke="#FF453A" stroke-width="5" marker-end="url(#ar)"/>
+        <path d="M-30,-55H46" stroke="#FF453A" stroke-width="5" stroke-dasharray="9 5" marker-end="url(#ar)"/>
+        <circle cx="0" cy="-55" r="12" fill="none" stroke="#FF453A" stroke-width="3"/>
+        <circle cx="0" cy="288" r="20" fill="none" stroke="#FF453A" stroke-width="3"/>
+        <path d="M0,276L10,298L-10,298z" fill="#E6E8EB"/>
+        <rect x="-49" y="-64" width="18" height="18" fill="none" stroke="#E6E8EB" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <g opacity=".35"><path d="M-22,-129L-42,-139L-42,-119z" fill="#E6E8EB"/><path d="M190,-90L210,-100L210,-80z" fill="#E6E8EB"/><path d="M240,-20L220,-30L220,-10z" fill="none" stroke="#E6E8EB" stroke-width="2.5"/></g>
+      </g></g>
+      <g fill="#E6E8EB" font-size="24" font-weight="700" text-anchor="middle"><text x="430" y="40">22</text><text x="352" y="258">4</text><text x="341" y="98">13</text><text x="572" y="162">31</text></g>
+      <g font-size="14" fill="#A7ADB5"><text x="358" y="402">1 NM</text><text x="318" y="560">2</text><text x="660" y="220">B</text><text x="692" y="300">A</text><text x="470" y="315" font-family="Inter">Terminal B</text><text x="590" y="350" font-family="Inter">Terminal C</text></g>
+      <rect x="272" y="168" width="28" height="28" rx="2" fill="#16181B" stroke="#E6E8EB" stroke-width="2"/><text x="286" y="190" font-size="22" font-weight="700" fill="#E6E8EB" text-anchor="middle">D</text>
+      <g font-weight="700"><rect x="80" y="104" width="276" height="38" rx="4" fill="#FF453A"/><text x="94" y="130" font-size="22" fill="#16181B">JZA646 at D in 14 s</text><path d="M342,142L384,178" stroke="#FF453A" stroke-width="3"/></g>
+      <text x="262" y="224" text-anchor="end" font-size="22" font-weight="700" fill="#E6E8EB">RESCUE35 EST</text><text x="262" y="243" text-anchor="end" font-size="14" fill="#A7ADB5">VEH · RADIO ONLY</text>
+      <text x="340" y="514" font-size="22" font-weight="700" fill="#E6E8EB">JZA646</text><text x="340" y="534" font-size="14" fill="#A7ADB5">CRJ9 · 1.8 NM · 138 kt</text>
+      <g font-size="15" fill="#7D838B"><text x="322" y="82" text-anchor="end">DAL1203</text><text x="612" y="190">AAL2187</text><text x="628" y="272">UAL331</text><rect x="694" y="259" width="34" height="17" rx="2" fill="none" stroke="#7D838B"/><text x="698" y="272" font-size="12" font-weight="700">SIM</text></g>
+      <g transform="translate(888 56) rotate(-30)" fill="#A7ADB5"><path d="M0,-24L7,-6L-7,-6z"/><path d="M0,-6V18" stroke="#A7ADB5" stroke-width="2"/></g><text x="862" y="40" font-size="14" fill="#A7ADB5">N</text>
+      <path d="M816,540h80M816,534v12M896,534v12" stroke="#A7ADB5" stroke-width="2"/><text x="856" y="530" font-size="13" fill="#A7ADB5" text-anchor="middle">0.5 NM</text>
+    </svg>
+  </section>
+  <footer class="caption"><span class="who">TWR → RESCUE35</span><span class="quote">“Rescue 35, cross runway 4 at Delta.”</span><span class="spacer"></span><span class="meta mono">03:36:42Z</span></footer>
+</div>
+<aside class="bays">
+  <section class="bay"><h2 class="sc">Arriving <b>1</b></h2>
+    <div class="strip warn"><div class="band"></div><div class="main"><div class="cs">JZA646 <small>CRJ9</small></div><div class="ln"><span class="clr">CLRD LAND 4</span> 03:36:21Z</div></div><div class="side"><span class="tag w">▲ CONFLICT</span><span class="ln">1.8 NM 138 kt</span></div></div>
+  </section>
+  <section class="bay"><h2 class="sc">On runway <b>2</b></h2>
+    <div class="strip warn veh"><div class="band"></div><div class="main"><div class="cs"><span class="vbox">VEH</span>RESCUE35</div><div class="ln"><span class="clr">XING 4 @D</span> 03:36:42Z</div></div><div class="side"><span class="tag w">▲ CONFLICT</span><span class="ln">RADIO ONLY · EST</span></div></div>
+    <div class="strip"><div class="band"></div><div class="main"><div class="cs">DAL1203 <small>A321</small></div><div class="ln"><span class="clr">LUAW 13</span></div></div><div class="side"><span class="d22">RWY 13</span><span class="ln">03:35:58Z</span></div></div>
+  </section>
+  <section class="bay"><h2 class="sc">Taxi out <b>1</b></h2>
+    <div class="strip"><div class="band"></div><div class="main"><div class="cs">AAL2187 <small>B738</small></div><div class="ln"><span class="clr">TAXI B → 13</span></div></div><div class="side"><span class="tag c">? 0.68</span><span class="ln">TWY B</span></div></div>
+  </section>
+  <section class="bay"><h2 class="sc">Taxi in <b>1</b></h2>
+    <div class="strip sim"><div class="band"></div><div class="main"><div class="cs">UAL331 <small>A320</small> <span class="tag">SIM</span></div><div class="ln">TWY A</div></div><div class="side"><span class="d22">TWY A</span><span class="ln">simulated</span></div></div>
+  </section>
+  <section class="bay"><h2 class="sc">At gate <b>1</b></h2>
+    <div class="strip"><div class="band"></div><div class="main"><div class="cs">SWA1450 <small>B737</small></div><div class="ln">C38</div></div><div class="side"><span class="d22">C38</span><span class="ln">gate</span></div></div>
+  </section>
+</aside>
+</body>
+</html>
