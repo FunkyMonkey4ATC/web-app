@@ -42,3 +42,4 @@ next-env.d.ts
 logs/
 .impeccable/quality/
 .next-*/
+.impeccable/review/

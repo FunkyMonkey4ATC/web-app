@@ -1,0 +1,508 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T23:08:24.043602+00:00",
+  "title": "Design System: Ground Truth",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Graphite Ground",
+        "canonical": "oklch(22.9% 0.009 256)",
+        "tonalRamp": [
+          "#090b0f",
+          "#222529",
+          "#3f4247",
+          "#5e6166",
+          "#7f8387",
+          "#a2a5aa",
+          "#c6c9ce",
+          "#eceff3"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "oklch(26.7% 0.011 254)",
+        "tonalRamp": [
+          "#080b10",
+          "#21252a",
+          "#3e4248",
+          "#5d6267",
+          "#7e8388",
+          "#a1a5ab",
+          "#c5c9cf",
+          "#ebeff4"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "oklch(30.3% 0.013 253)",
+        "tonalRamp": [
+          "#080b10",
+          "#21262b",
+          "#3d4349",
+          "#5d6268",
+          "#7e8389",
+          "#a0a6ac",
+          "#c5cad0",
+          "#eaeff5"
+        ]
+      },
+      "seam": {
+        "role": "neutral",
+        "displayName": "Seam",
+        "canonical": "oklch(36.9% 0.016 256)",
+        "tonalRamp": [
+          "#070b11",
+          "#20252d",
+          "#3d434b",
+          "#5c626a",
+          "#7d838b",
+          "#9fa6ae",
+          "#c4cad2",
+          "#e9eff7"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(96.6% 0.003 248)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#a3a5a7",
+          "#c7c9cb",
+          "#edeff1"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "oklch(80.2% 0.013 256)",
+        "tonalRamp": [
+          "#090b0f",
+          "#22252a",
+          "#3e4248",
+          "#5d6268",
+          "#7e838a",
+          "#a0a6ad",
+          "#c4cad2",
+          "#e9eff7"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "oklch(65.7% 0.018 254)",
+        "tonalRamp": [
+          "#070c11",
+          "#20262c",
+          "#3c434a",
+          "#5b626b",
+          "#7b838d",
+          "#9ea6b0",
+          "#c2cad4",
+          "#e8eff9"
+        ]
+      },
+      "runway": {
+        "role": "neutral",
+        "displayName": "Runway Pavement",
+        "canonical": "oklch(42.9% 0.017 258)",
+        "tonalRamp": [
+          "#070b11",
+          "#20252d",
+          "#3d424b",
+          "#5c626b",
+          "#7d838c",
+          "#9fa5af",
+          "#c4cad2",
+          "#e9eff8"
+        ]
+      },
+      "taxiway": {
+        "role": "neutral",
+        "displayName": "Taxiway Pavement",
+        "canonical": "oklch(34.6% 0.015 252)",
+        "tonalRamp": [
+          "#070c11",
+          "#20262c",
+          "#3d434a",
+          "#5c6269",
+          "#7d838a",
+          "#a0a6ad",
+          "#c4cad1",
+          "#e9eff6"
+        ]
+      },
+      "apron": {
+        "role": "neutral",
+        "displayName": "Apron",
+        "canonical": "oklch(28.4% 0.012 258)",
+        "tonalRamp": [
+          "#080b10",
+          "#21252b",
+          "#3e4248",
+          "#5d6268",
+          "#7e8389",
+          "#a1a5ac",
+          "#c5c9d0",
+          "#ebeff5"
+        ]
+      },
+      "paint": {
+        "role": "neutral",
+        "displayName": "Runway Paint",
+        "canonical": "oklch(96.6% 0.003 248)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#a3a5a7",
+          "#c7c9cb",
+          "#edeff1"
+        ]
+      },
+      "clear": {
+        "role": "primary",
+        "displayName": "Clearance Cyan",
+        "canonical": "oklch(78.9% 0.122 231)",
+        "tonalRamp": [
+          "#000d29",
+          "#002a4a",
+          "#004a6e",
+          "#006b93",
+          "#208eba",
+          "#46b2e2",
+          "#6dd7ff",
+          "#99fdff"
+        ]
+      },
+      "warn": {
+        "role": "signal",
+        "displayName": "Warning Red",
+        "canonical": "oklch(66.3% 0.224 28)",
+        "tonalRamp": [
+          "#3a0000",
+          "#640000",
+          "#8f0000",
+          "#bb0000",
+          "#e8322a",
+          "#ff5e4f",
+          "#ff8a78",
+          "#ffb5a1"
+        ]
+      },
+      "warn-sign": {
+        "role": "signal",
+        "displayName": "Mandatory Sign Red",
+        "canonical": "oklch(57.6% 0.209 29)",
+        "tonalRamp": [
+          "#390000",
+          "#630000",
+          "#8d0000",
+          "#b90100",
+          "#e33c2d",
+          "#ff6a57",
+          "#ff947f",
+          "#ffbda7"
+        ]
+      },
+      "caution": {
+        "role": "signal",
+        "displayName": "Caution Orange",
+        "canonical": "oklch(78.2% 0.171 67)",
+        "tonalRamp": [
+          "#280000",
+          "#4c0700",
+          "#712a00",
+          "#974a00",
+          "#bf6a00",
+          "#e88c00",
+          "#ffb137",
+          "#ffd86e"
+        ]
+      },
+      "sign-black": {
+        "role": "sign",
+        "displayName": "Sign Black",
+        "canonical": "oklch(15.4% 0.005 264)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#414244",
+          "#606163",
+          "#818285",
+          "#a4a5a7",
+          "#c8c9cb",
+          "#edeef1"
+        ]
+      },
+      "sign-yellow": {
+        "role": "sign",
+        "displayName": "Sign Yellow",
+        "canonical": "oklch(87.5% 0.179 93)",
+        "tonalRamp": [
+          "#1d0200",
+          "#3c1d00",
+          "#5d3b00",
+          "#7f5b00",
+          "#a47d00",
+          "#caa000",
+          "#f1c400",
+          "#ffea49"
+        ]
+      },
+      "sign-white": {
+        "role": "sign",
+        "displayName": "Sign White",
+        "canonical": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Splash headline only."
+      },
+      "clock": {
+        "displayName": "Clock",
+        "purpose": "Zulu clock, header and operator."
+      },
+      "alert": {
+        "displayName": "Alert",
+        "purpose": "Warning banner sentence (cautions 26px)."
+      },
+      "callsign": {
+        "displayName": "Callsign",
+        "purpose": "Callsigns on full strips (quiet strips 22px)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Bay headers, header values, signs in header and banner."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base text, clearance lines, buttons."
+      },
+      "secondary": {
+        "displayName": "Secondary",
+        "purpose": "Metadata, timestamps, weather sub-line; the controller-facing floor."
+      },
+      "tag": {
+        "displayName": "Tag",
+        "purpose": "Status vocabulary: WARNING, CAUTION, CONFLICT, SIM, VEH, ONLINE."
+      },
+      "sign": {
+        "displayName": "Sign Legend",
+        "purpose": "Legends inside FAA sign panels."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Raw JSON in the pipeline rail only."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "strip-reorder",
+        "value": "200ms ease-out",
+        "purpose": "FLIP travel when strips reorder; the only moving panel content."
+      },
+      {
+        "name": "rail-slide",
+        "value": "transform 200ms ease-out",
+        "purpose": "Pipeline rail slides over the strip bays."
+      },
+      {
+        "name": "blackout-fade",
+        "value": "opacity 1000ms",
+        "purpose": "Incident 'without' ending fade to black."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "none",
+        "purpose": "All of the above are disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "console-compact",
+        "value": "max-width 1600px",
+        "purpose": "Header hides secondary detail."
+      }
+    ],
+    "focus": {
+      "value": "3px solid #5ac8fa, offset 2px",
+      "purpose": "Every focusable element."
+    }
+  },
+  "components": [
+    {
+      "name": "Location Sign",
+      "kind": "custom",
+      "refersTo": "sign-location",
+      "description": "FAA location sign for every runway, taxiway and position name.",
+      "html": "<span class=\"ds-sign-loc\">28L</span> <span class=\"ds-sign-loc\">SFO Tower</span>",
+      "css": ".ds-sign-loc{display:inline-flex;align-items:center;justify-content:center;background:#0b0c0e;color:#ffd100;border:2px solid #ffd100;border-radius:2px;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;font-weight:800;font-size:1.375rem;letter-spacing:.02em;line-height:1;padding:.2em .4em}"
+    },
+    {
+      "name": "Mandatory Sign",
+      "kind": "custom",
+      "refersTo": "sign-mandatory",
+      "description": "Red mandatory runway sign; leads every warning and marks the holding position.",
+      "html": "<span class=\"ds-sign-mand\">10R-28L</span>",
+      "css": ".ds-sign-mand{display:inline-flex;align-items:center;justify-content:center;background:#d92d20;color:#fff;border:2px solid #fff;outline:2px solid #0b0c0e;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;font-weight:800;font-size:1.375rem;letter-spacing:.02em;line-height:1;padding:.25em .5em}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acknowledge and the splash's main action.",
+      "html": "<button class=\"ds-btn-primary\">Acknowledge <kbd class=\"ds-kbd\">A</kbd></button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:12px;height:40px;padding:0 14px;border:0;border-radius:4px;background:#f2f4f6;color:#1a1d21;font:600 1.125rem 'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;cursor:pointer}.ds-btn-primary:hover{background:#b9bfc7}.ds-btn-primary:focus-visible{outline:3px solid #5ac8fa;outline-offset:2px}.ds-kbd{border:1px solid currentColor;border-radius:4px;padding:0 6px;font-size:1rem;font-weight:700;opacity:.75}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "False alarm, override, show/hide, operator controls.",
+      "html": "<button class=\"ds-btn-outline\">False alarm <kbd class=\"ds-kbd\">F</kbd></button>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;gap:12px;height:40px;padding:0 14px;border:1px solid #b9bfc7;border-radius:4px;background:transparent;color:#f2f4f6;font:600 1.125rem 'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;cursor:pointer}.ds-btn-outline:hover{border-color:#f2f4f6}.ds-btn-outline:active{background:#2a2f35}.ds-btn-outline:focus-visible{outline:3px solid #5ac8fa;outline-offset:2px}.ds-kbd{border:1px solid currentColor;border-radius:4px;padding:0 6px;font-size:1rem;font-weight:700;opacity:.75}"
+    },
+    {
+      "name": "Flight Strip",
+      "kind": "card",
+      "refersTo": "strip",
+      "description": "Full strip: band, callsign, type, SIM tag, cyan clearance, speed; conflict and caution variants thicken the border.",
+      "html": "<div class=\"ds-strips\"><button class=\"ds-strip\"><span class=\"ds-band\"></span><span class=\"ds-main\"><span><b class=\"ds-cs\">FGX211</b> <span class=\"ds-mut\">A321</span> <span class=\"ds-sim\">SIM</span></span><span class=\"ds-clr\">LUAW 1L <span class=\"ds-mut\">21:12:50Z</span></span></span><span class=\"ds-side ds-mut\">0 kt</span></button><button class=\"ds-strip ds-warn\"><span class=\"ds-band\"></span><span class=\"ds-main\"><span><b class=\"ds-cs\">BYL646</b> <span class=\"ds-mut\">A320</span></span><span class=\"ds-clr\">CLRD LAND 28L</span></span><span class=\"ds-side\"><span class=\"ds-conf\">&#9650; CONFLICT</span><span class=\"ds-mut\">145 kt</span></span></button></div>",
+      "css": ".ds-strips{display:flex;flex-direction:column;gap:6px;background:#22262b;padding:12px;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;color:#f2f4f6}.ds-strip{display:grid;grid-template-columns:8px 1fr auto;min-height:78px;background:#2a2f35;border:1px solid #3a4048;border-radius:4px;overflow:hidden;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer}.ds-strip:focus-visible{outline:3px solid #5ac8fa;outline-offset:2px}.ds-band{background:#4a5059}.ds-main{display:flex;flex-direction:column;justify-content:space-between;padding:8px 14px}.ds-cs{font-size:1.625rem;font-weight:700}.ds-mut{color:#b9bfc7;font-size:1rem}.ds-sim{border:1px dashed #b9bfc7;border-radius:4px;padding:0 6px;font-size:1rem;font-weight:700;letter-spacing:.05em;color:#b9bfc7}.ds-clr{color:#5ac8fa;font-weight:600;font-size:1.125rem}.ds-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:8px 14px}.ds-warn{border:2px solid #ff453a}.ds-warn .ds-band{background:#ff453a}.ds-conf{background:#ff453a;color:#1a1d21;border-radius:4px;padding:0 6px;font-weight:700;letter-spacing:.05em}"
+    },
+    {
+      "name": "Warning Banner",
+      "kind": "custom",
+      "refersTo": "alert-warning",
+      "description": "Plain-sentence warning over the top of the map, led by a mandatory sign.",
+      "html": "<section class=\"ds-alert\"><div class=\"ds-bar\"></div><div class=\"ds-body\"><div class=\"ds-row\"><span class=\"ds-sign-mand\">28L</span><b class=\"ds-w\">&#9650; WARNING</b><span class=\"ds-mut\">Rule 1 &middot; crossing clearance on a landing runway</span></div><p class=\"ds-sent\">Rescue 9 is crossing runway 28L while Bayline 646 is landing on it.</p></div></section>",
+      "css": ".ds-alert{display:grid;grid-template-columns:10px 1fr;background:color-mix(in srgb,#ff453a 12%,#22262b);color:#f2f4f6;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif}.ds-bar{background:#ff453a}.ds-body{padding:12px 24px}.ds-row{display:flex;align-items:center;gap:12px;font-size:1rem}.ds-w{color:#ff453a;letter-spacing:.05em}.ds-mut{color:#b9bfc7}.ds-sent{margin:8px 0;font-size:2rem;font-weight:600;line-height:1.25}.ds-sign-mand{display:inline-flex;background:#d92d20;color:#fff;border:2px solid #fff;outline:2px solid #0b0c0e;font-weight:800;font-size:1.375rem;line-height:1;padding:.25em .5em}"
+    },
+    {
+      "name": "Caution Banner",
+      "kind": "custom",
+      "refersTo": "alert-caution",
+      "description": "Orange-bordered caution: low confidence, readback mismatch.",
+      "html": "<section class=\"ds-caution\"><div class=\"ds-row\"><span class=\"ds-sign-loc\">1R</span><b class=\"ds-c\">&#9651; CAUTION</b><span class=\"ds-mut\">readback mismatch</span></div><p class=\"ds-sent\">TML88 read back taxiway M; the instruction was L.</p></section>",
+      "css": ".ds-caution{border:2px solid #ff9f0a;background:#22262b;color:#f2f4f6;padding:12px 24px;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif}.ds-row{display:flex;align-items:center;gap:12px;font-size:1rem}.ds-c{color:#ff9f0a;letter-spacing:.05em}.ds-mut{color:#b9bfc7}.ds-sent{margin:8px 0 0;font-size:1.625rem;font-weight:600;line-height:1.25}.ds-sign-loc{display:inline-flex;background:#0b0c0e;color:#ffd100;border:2px solid #ffd100;border-radius:2px;font-weight:800;font-size:1.375rem;line-height:1;padding:.2em .4em}"
+    },
+    {
+      "name": "Rail Tabs",
+      "kind": "nav",
+      "refersTo": "panel",
+      "description": "Pipeline rail tabs: 3px ink underline when active.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-on\">Calls</button><button class=\"ds-tab\">Rules</button><button class=\"ds-tab\">Alerts</button></nav>",
+      "css": ".ds-tabs{display:flex;padding:0 8px;background:#22262b;border-bottom:1px solid #3a4048;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif}.ds-tab{height:44px;margin-bottom:-1px;padding:0 12px;border:0;border-bottom:3px solid transparent;background:none;color:#b9bfc7;font:700 1.125rem inherit;cursor:pointer}.ds-tab:hover{color:#f2f4f6}.ds-tab.ds-on{border-color:#f2f4f6;color:#f2f4f6}.ds-tab:focus-visible{outline:3px solid #5ac8fa;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Cab",
+    "overview": "A graphite working surface where nothing speaks until the airfield disagrees with the radio, and the airfield names itself in its own sign language. The console is a second screen beside a controller's scope and a projector image in a bright hall, so everything is tuned for distance: lifted dark ground rather than black, 7:1 text, heavy strokes, large type, tabular figures. Normal traffic reads as calm grey geometry and quiet one-line confirmations; a conflict turns one runway red, puts a plain sentence across the top of the map, and leads with a red mandatory sign.\n\nThe identity is borrowed, not invented: runway, taxiway and position names sit in FAA location-sign panels (black field, yellow border, yellow legend), and every warning leads with a red mandatory runway sign. Color is reserved semantics, never decoration. The same world carries the console (/console), the operator remote (/operator) and the splash (/), with the splash allowed one large display headline.\n\nIt refuses the ASDE-X slate-and-cyan scope, the SaaS card dashboard, sci-fi HUD styling, code-looking or game-looking type, and anything playful.",
+    "keyCharacteristics": [
+      "Graphite tonal layers split by 1px seams; no shadows anywhere.",
+      "One typeface, Atkinson Hyperlegible Next, for every word and figure; mono only for raw JSON in the rail.",
+      "FAA airfield signs as the identity layer: location signs for names, mandatory signs for warnings and hold-position.",
+      "Strict aviation color semantics, each state doubled by a shape or word.",
+      "State changes are instant; only strips move, and only when they reorder (plus a single cyan pulse on a called target)."
+    ],
+    "rules": [
+      {
+        "name": "The Reserved Signal Rule",
+        "body": "Red means a warning that needs action now; orange means a caution; nothing else may borrow either, not even for emphasis, hover or branding. If an element is red, the controller must act.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sign Yellow Rule",
+        "body": "Sign yellow appears only inside a location-sign panel (black field, yellow border, yellow legend). Never as an accent, text color, highlight or chart color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Channels Rule",
+        "body": "Every state carries a shape or word as well as a color: filled triangle plus WARNING, outlined triangle plus CAUTION, \"?\" plus a confidence figure, SIM/EST/VEH tags, dashed borders.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Face Rule",
+        "body": "Atkinson Hyperlegible for every word and figure; the mono cut appears only for raw JSON in the pipeline rail.",
+        "section": "typography"
+      },
+      {
+        "name": "The 14px Floor Rule",
+        "body": "14px (text-xs) is never used for anything the controller must read; it is limited to the judge-facing rail.",
+        "section": "typography"
+      },
+      {
+        "name": "The Panels Hold Rule",
+        "body": "Panels never resize or move in response to data; alerts overlay, the rail slides over, and only strips reorder.",
+        "section": "layout"
+      },
+      {
+        "name": "The Seams Not Shadows Rule",
+        "body": "Separation is a 1px seam (#3a4048) or a tonal step; a box-shadow anywhere is a defect.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Dashed Means Simulated Rule",
+        "body": "A dashed border or dashed symbol means simulated or estimated, and nothing else. Recorded traffic is always solid.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Square Vehicle Rule",
+        "body": "Vehicles are square: square map symbol, square-cornered strip, hatched band, boxed VEH tag. Aircraft are chevrons and 4px strips.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do put every runway, taxiway and position name in a location sign (black field, yellow border, yellow legend).",
+      "Do lead every warning with a red mandatory sign and a filled triangle plus the word WARNING.",
+      "Do write clearance text in cyan and nothing alarming in cyan.",
+      "Do separate panels with 1px seams over the seam color and keep every panel in place.",
+      "Do keep parked traffic quiet (small, 35% opacity, unlabeled) so cleared and moving traffic stands out.",
+      "Do mark simulated and estimated things with dashes and a SIM or EST tag.",
+      "Do switch every motion off under prefers-reduced-motion (strip FLIP, rail slide)."
+    ],
+    "donts": [
+      "Don't use red or orange for anything but warnings and cautions, or sign yellow outside a sign panel.",
+      "Don't add box shadows, gradients, glows or glass; depth is tonal.",
+      "Don't introduce a second typeface or code-looking type outside the rail's raw JSON.",
+      "Don't set controller-facing text below 16px.",
+      "Don't resize or reflow panels on an alert; overlay instead.",
+      "Don't style the console as an ASDE-X slate-and-cyan scope, a SaaS card dashboard, a sci-fi HUD or anything playful."
+    ]
+  }
+}
