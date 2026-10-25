@@ -163,7 +163,7 @@ A near-neutral graphite field with four reserved signal colors, each owning exac
 - **Clearance Cyan** (clear): the ink of permission. Clearance shorthand on strips and map labels (CLRD LAND 28L, XING 28L @P), the caption's "from → to" speaker line, the selection ring and outline, the focus ring, text selection, caret, and the operator's playing state. Cyan means "cleared, informational, or selected", never alarm.
 
 ### Signal
-- **Warning Red** (warn): a conflict needing action now, and nothing else. The alert banner's left bar and WARNING word, the conflict zone fill (20% tint) and stroke, conflict paths and ring, the countdown panel on the map, the CONFLICT tag and band on a strip.
+- **Warning Red** (warn): a conflict needing action now, and nothing else. The alert banner's 12% tint and WARNING word, the conflict zone fill (20% tint) and stroke, conflict paths and ring, the countdown panel on the map, the CONFLICT tag and band on a strip.
 - **Mandatory Sign Red** (warn-sign): the field of a mandatory runway sign only (alert banner runway, holding-position sign on the map), with a white legend and border inside a sign-black keyline.
 - **Caution Orange** (caution): low parser confidence, readback mismatch, and weather near or below minimums. Caution banners, CAUTION and "? 0.62" confidence tags, caution strip border and band, weather below-minimums line, rail verdicts for caution rules.
 
@@ -249,7 +249,7 @@ Engineered and nearly square. Controls and aircraft strips use a gentle 4px corn
 - **Countdown panel (map):** warn-red field with sign-black legend ("BYL646 at P in 13 s"), placed off the pavement away from the terminals, with a dotted red leader to the conflict point.
 
 ### Alert Banners
-- **Warning:** a 10px red bar on the left, a 12% red tint over panel, then: mandatory runway sign, filled triangle + WARNING in red tag type, the rule detail in ink-2; the 32px plain sentence; then Acknowledge (primary, with A key), the countdown in bold ink, latency and Zulu time, and False alarm (outline, F key) pushed right. role="alert".
+- **Warning:** a 12% red tint over panel and no side bar (the red mandatory sign leads), then: mandatory runway sign, filled triangle + WARNING in red tag type, the rule detail in ink-2; the 32px plain sentence; then Acknowledge (primary, with A key), the countdown in bold ink, latency and Zulu time, and False alarm (outline, F key) pushed right. role="alert".
 - **Caution:** 2px orange border on panel, location sign, outlined triangle + CAUTION, 26px sentence. role="status".
 - Up to three stack newest first, seamed; overflow collapses to "+N more". Acknowledged banners replace the buttons with a plain-word state.
 

@@ -16,12 +16,12 @@ export default function Landing() {
   }
 
   return (
-    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden md:grid md:grid-rows-[1fr_auto]">
+    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden md:grid md:grid-rows-[auto_1fr_auto]">
+      <header className="flex items-center gap-3 px-4 pt-6 text-sm sm:px-10 md:px-16">
+        <span className="sign-loc">SFO Tower</span>
+        <span className="font-semibold">Ground Truth</span>
+      </header>
       <section className="flex max-w-3xl flex-col justify-center gap-6 px-4 py-10 sm:px-10 md:px-16">
-        <p className="flex items-center gap-3">
-          <span className="sign-loc text-sm">SFO Tower</span>
-          <span className="font-semibold">Ground Truth</span>
-        </p>
         <h1 className="text-[clamp(2.5rem,7vw,5rem)] leading-[1.05] font-bold text-balance">
           A second set of ears for the tower.
         </h1>

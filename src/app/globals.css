@@ -59,8 +59,3 @@ body { font-family: var(--font-sans); font-size: var(--text-base); line-height: 
   border: 2px solid #fff; outline: 2px solid var(--color-sign-black);
   font-weight: 800; letter-spacing: 0.02em; line-height: 1; padding: 0.25em 0.5em;
 }
-
-/* Hard two-step state changes; only strips travel when they reorder. */
-@keyframes gt-pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
-.gt-flash { animation: gt-pulse 0.8s steps(2, jump-none) infinite; }
-@media (prefers-reduced-motion: reduce) { .gt-flash { animation: none; } }

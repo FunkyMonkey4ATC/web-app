@@ -2,6 +2,7 @@
 // Demo-only pipeline rail: every call from audio to verdict. Overlays the strip column; the parent must be `relative overflow-hidden`.
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { ZULU, spoken, type Alert, type Call, type OutboxItem, type RuleId, type Stage, type WorldState } from "@/lib/contract";
+import { Dot, Tri } from "@/components/console/icons";
 import { jsonTokens, secs, waveform, type Tok } from "./format";
 
 const RULES: Record<RuleId, [number, string]> = {
@@ -11,10 +12,12 @@ const RULES: Record<RuleId, [number, string]> = {
   readback_mismatch: [4, "Readback matches the instruction"],
 };
 const SOURCE: Record<Call["source"], string> = { replay: "replay", mic: "live mic", scenario: "scenario" };
-const OUTBOX: Record<OutboxItem["status"], string> = { queued: "◌ queued", sent: "✓ sent", failed: "✕ failed", mock: "mock" };
-const TOK: Record<Tok["k"], string> = { key: "text-ink-2", str: "text-clear", num: "text-ink", lit: "text-ink font-bold", punc: "text-ink-3" };
+const OUTBOX: Record<OutboxItem["status"], ReactNode> = {
+  queued: <><Dot filled={false} /> queued</>, sent: <><Mark pass cls="" /> sent</>, failed: <><Mark pass={false} cls="" /> failed</>, mock: <><Dot filled /> mock</>,
+};
+const TOK: Record<Tok["k"], string> = { key: "text-ink-2", str: "text-ink", num: "text-ink", lit: "text-ink font-bold", punc: "text-ink-3" };
 const CAPS = "[font-variant-caps:all-small-caps] tracking-wider font-bold text-ink-2";
-const KBD = "border border-current rounded-[3px] px-1 text-xs font-bold opacity-70";
+const KBD = "rounded-sm border border-current px-1.5 text-sm font-bold opacity-75";
 
 const stageMs = (s?: Stage) => (s ? `${Math.round(s.ms)} ms` : undefined);
 const actionText = (c: Call) => (c.clearance ? [c.clearance.action.replaceAll("_", " "), c.clearance.runway].filter(Boolean).join(" ") : "");
@@ -48,7 +51,7 @@ export function Rail({ world, open, onClose }: { world: WorldState; open: boolea
     >
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-seam px-4">
         <h2 id={`${id}-h`} className="text-lg font-bold">Pipeline</h2>
-        <span className="rounded-[2px] border border-ink-2 px-1.5 text-xs font-bold tracking-wider text-ink-2">DEMO</span>
+        <span className="rounded-[2px] border border-ink-2 px-1.5 text-xs font-bold tracking-wider text-ink-2">DEMO{world.ui.agentMode === "mock" && " · mock agent"}</span>
         <button onClick={onClose} className="ml-auto flex h-9 items-center gap-2 rounded border border-ink-2 px-3 text-sm font-bold hover:bg-raised">
           Close <kbd className={KBD}>Esc</kbd>
         </button>
@@ -102,7 +105,8 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
   const live = liveWarning(alert);
   const v = call.verdict;
   const vCls = v === "caution" ? "text-caution" : v === "warning" && live ? "text-warn" : v ? "text-ink" : "text-ink-3";
-  const vShort = v === "ok" ? "✓ No conflict" : v === "caution" ? "◆ Caution" : v === "warning" ? "▲ Warning" : "Checking…";
+  const vShort = v === "ok" ? "No conflict" : v === "caution" ? "Caution" : v === "warning" ? "Warning" : "Checking…";
+  const vIcon = v === "ok" ? <Mark pass cls="" /> : v === "caution" ? <Tri outline /> : v === "warning" ? <Tri /> : null;
   const latency = alert?.latencyMs != null ? ` · alert in ${secs(alert.latencyMs)}` : "";
   const track = call.linkedTrackId ? world.tracks.find((t) => t.id === call.linkedTrackId) : undefined;
   const c = call.clearance;
@@ -114,7 +118,7 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
           <span className="shrink-0 text-ink-2">{ZULU(call.t)}</span>
           <span className="shrink-0 font-bold">{spoken(call.from)} → {spoken(call.to)}</span>
           <span title={actionText(call)} className="truncate text-ink-2">{actionText(call)}</span>
-          <span className={`ml-auto shrink-0 font-bold ${vCls}`}>{vShort}</span>
+          <span className={`ml-auto flex shrink-0 items-center gap-1.5 font-bold ${vCls}`}>{vIcon}{vShort}</span>
           <svg aria-hidden viewBox="0 0 12 12" className={`size-3 shrink-0 text-ink-2 ${open ? "rotate-180" : ""}`}>
             <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" />
           </svg>
@@ -197,7 +201,7 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
                     : r.rule === "weather_below_minimums" || r.rule === "readback_mismatch" ? "text-caution" : "text-ink";
                   return (
                     <li key={r.rule} className="flex gap-2">
-                      <Mark pass={r.pass} cls={r.pass ? "text-ink-2" : failCls} />
+                      <Mark pass={r.pass} label={r.pass ? "pass" : "fail"} cls={`mt-1 ${r.pass ? "text-ink-2" : failCls}`} />
                       <div className="min-w-0">
                         <span className="font-bold">Rule {RULES[r.rule][0]}</span> <span className="text-ink-2">{RULES[r.rule][1]}</span>
                         <div className={`text-sm ${r.pass ? "text-ink-2" : failCls}`}>{r.why}</div>
@@ -223,7 +227,8 @@ function CallCard({ call, world, open, onToggle, raw, setRaw }: {
           <Row label="Verdict">
             <p className={`flex flex-wrap items-center gap-2 font-bold ${vCls}`}>
               {v === "warning" && live && alert && <span className="sign-mand text-sm">{alert.conflict.runway}</span>}
-              {v === "ok" ? "✓ No conflict" : v === "caution" ? `◆ Caution${latency}` : v === "warning" ? `${live ? "" : "▲ "}Warning${latency}${alert?.status === "resolved" ? " · resolved" : ""}` : "Checking…"}
+              {!(v === "warning" && live) && vIcon}
+              {v === "caution" ? `Caution${latency}` : v === "warning" ? `Warning${latency}${alert?.status === "resolved" ? " · resolved" : ""}` : vShort}
             </p>
             {alert && <p className="mt-1">{alert.text}</p>}
           </Row>
@@ -252,9 +257,9 @@ function Chip({ k, caution, children }: { k: string; caution?: boolean; children
   );
 }
 
-function Mark({ pass, cls }: { pass: boolean; cls: string }) {
+function Mark({ pass, cls, label }: { pass: boolean; cls: string; label?: string }) {
   return (
-    <svg viewBox="0 0 16 16" className={`mt-1 size-4 shrink-0 ${cls}`} role="img" aria-label={pass ? "pass" : "fail"}>
+    <svg viewBox="0 0 16 16" className={`size-4 shrink-0 ${cls}`} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <path d={pass ? "M2.5 8.5l3.5 3.5 7.5-8" : "M3 3l10 10M13 3L3 13"} fill="none" stroke="currentColor" strokeWidth="2.5" />
     </svg>
   );
@@ -279,7 +284,7 @@ function Outbox({ items }: { items: OutboxItem[] }) {
         <li key={`${o.alertId}-${o.t}`} className="border-b border-seam px-4 py-3">
           <div className="mb-1 flex items-center gap-3 text-sm text-ink-2">
             <span>{ZULU(o.t)}</span>
-            <span className="ml-auto rounded-[2px] border border-ink-2 px-1.5 font-bold">{OUTBOX[o.status]}</span>
+            <span className="ml-auto flex items-center gap-1 rounded-[2px] border border-ink-2 px-1.5 font-bold">{OUTBOX[o.status]}</span>
           </div>
           <p className="whitespace-pre-wrap">{o.text}</p>
         </li>

@@ -54,7 +54,7 @@ export default function Operator() {
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-3xl font-semibold tabular-nums">{ZULU(clock.simT)}</span>
-          <span className={`rounded border-2 px-3 py-1 text-lg font-semibold ${clock.playing ? "border-clear text-clear" : "border-ink-2 text-ink"}`}>
+          <span className={`whitespace-nowrap rounded border-2 px-3 py-1 text-lg font-semibold ${clock.playing ? "border-clear text-clear" : "border-ink-2 text-ink"}`}>
             {clock.playing ? "Playing" : "Paused"} · {clock.speed}x
           </span>
         </div>

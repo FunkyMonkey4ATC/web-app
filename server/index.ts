@@ -17,6 +17,7 @@ const agent = process.env.AGENT_URL
       sttPath: process.env.AGENT_STT_PATH,
       parsePath: process.env.AGENT_PARSE_PATH,
       conflictPath: process.env.AGENT_CONFLICT_PATH,
+      audioBase: `http://127.0.0.1:${port}`, // scenario clips go to the gateway's speech model
     })
   : createMockAgent();
 const engine = createEngine({ agent, network: process.env.NETWORK === "online" ? "online" : "offline" });
