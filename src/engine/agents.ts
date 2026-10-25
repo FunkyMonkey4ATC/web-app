@@ -2,9 +2,10 @@
 import type { Action, Clearance, Conflict, OutboxItem } from "@/lib/contract";
 import type { AgentPort } from "./types";
 import { normCallsign, parseText } from "./parser";
+import { RUNWAYS } from "@/lib/sfo";
 
 // Budgets sized so a hung agent still leaves time for the rule-1 alert; the judge runs after the alert is up.
-const MS = { stt: 3000, parse: 3000, judge: 8000 }; // on the GB10 the gateway answers speech in ~0.5 s and parse in ~1.7 s
+const MS = { stt: 3000, parse: 3000, judge: 8000 }; // defaults; on the GB10 the gateway answers speech in ~0.5 s and parse in ~1.7 s
 const COOLDOWN_MS = 30_000; // after any failure the mock answers for a while, so a hung agent costs one slow call, not every call
 const now = () => performance.now();
 const since = (t0: number) => Math.round(now() - t0);
@@ -65,6 +66,16 @@ function clean(j: Record<string, unknown>): Partial<Clearance> {
   };
 }
 
+const CALLSIGN = /^([A-Z]{3}\d{1,4}[A-Z]{0,2}|N\d{1,5}[A-Z]{0,2}|(RESCUE|OPS|TRUCK)\d{1,3})$/;
+const RUNWAY_ENDS = new Set(RUNWAYS.flatMap((r) => r.ends.map((e) => e.name)));
+const DIGIT: Record<string, string> = { zero: "0", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9", niner: "9" };
+/** The callsign looks like one, its number was actually heard, and any runway is a real SFO runway end. */
+export function plausible(c: Partial<Clearance>, heard: string): boolean {
+  const said = heard.toLowerCase().split(/[^a-z0-9]+/).map((w) => DIGIT[w] ?? w.replace(/\D/g, "")).join("");
+  const num = c.callsign?.replace(/^\D+/, "").replace(/\D+$/, "") ?? "";
+  return !!c.callsign && CALLSIGN.test(c.callsign) && (!num || said.includes(num)) && (!c.runway || RUNWAY_ENDS.has(c.runway));
+}
+
 // Chris's gateway (agentic-workflow README): OpenAI-compatible at http://<gb10>:4000/v1, schemas from its config/.
 const CLEARANCE_SCHEMA = {
   type: "object", additionalProperties: false, required: ["speaker", "clearances", "flags"],
@@ -91,23 +102,23 @@ const SEVERITY_SCHEMA = {
 const GW_SEVERITY: Record<string, "high" | "medium" | "low"> = { critical: "high", high: "high", uncertain: "medium", non_critical: "low" };
 
 /** Chris's gateway: ATC Whisper for speech, `fast` for the clearance JSON, `reason` for severity; mock on any failure. */
-function createGatewayAgent(baseUrl: string, audioBase?: string): AgentPort {
+function createGatewayAgent(baseUrl: string, audioBase: string | undefined, ms: typeof MS): AgentPort {
   const mock = createMockAgent(), base = baseUrl.replace(/\/$/, "");
   const downUntil: Record<string, number> = {}; // per model, so a slow parser never silences the speech model
-  const call = async (model: string, path: string, init: RequestInit, ms: number, priority: string): Promise<Record<string, unknown>> => {
+  const call = async (model: string, path: string, init: RequestInit, timeoutMs: number, priority: string): Promise<Record<string, unknown>> => {
     if (Date.now() < (downUntil[model] ?? 0)) throw new Error("agent cooling down");
     try {
-      const res = await fetch(base + path, { method: "POST", ...init, headers: { "X-Priority": priority, ...init.headers }, signal: AbortSignal.timeout(ms) });
+      const res = await fetch(base + path, { method: "POST", ...init, headers: { "X-Priority": priority, ...init.headers }, signal: AbortSignal.timeout(timeoutMs) });
       if (!res.ok) throw new Error(`${path} ${res.status}`);
       const j = await res.json();
       return j && typeof j === "object" ? j : {};
     } catch (err) { downUntil[model] = Date.now() + COOLDOWN_MS; throw err; }
   };
-  const chat = async (model: string, system: string, user: string, name: string, schema: object, ms: number, priority: string, headers: Record<string, string> = {}) => {
+  const chat = async (model: string, system: string, user: string, name: string, schema: object, timeoutMs: number, priority: string, headers: Record<string, string> = {}) => {
     const j = await call(model, "/chat/completions", {
       headers: { "content-type": "application/json", ...headers },
       body: JSON.stringify({ model, temperature: 0, messages: [{ role: "system", content: system }, { role: "user", content: user }], response_format: { type: "json_schema", json_schema: { name, schema } } }),
-    }, ms, priority);
+    }, timeoutMs, priority);
     const content = (j.choices as { message?: { content?: string } }[] | undefined)?.[0]?.message?.content;
     return JSON.parse(content ?? "{}") as Record<string, unknown>;
   };
@@ -117,22 +128,25 @@ function createGatewayAgent(baseUrl: string, audioBase?: string): AgentPort {
       const t0 = now();
       try {
         const audio = input.audio ? new Blob([input.audio], { type: input.mime ?? "audio/webm" })
-          : input.audioUrl && audioBase ? await (await fetch(audioBase + input.audioUrl, { signal: AbortSignal.timeout(MS.stt) })).blob() : null;
+          : input.audioUrl && audioBase ? await (await fetch(audioBase + input.audioUrl, { signal: AbortSignal.timeout(ms.stt) })).blob() : null;
         if (!audio) return mock.transcribe(input); // a scripted call with no clip: its typed words stand in
         const form = new FormData();
-        form.append("file", audio, input.audio ? "mic.webm" : "call.wav");
+        form.append("file", audio, audio.type.includes("webm") ? "mic.webm" : "call.wav");
         form.append("model", "asr");
-        const j = await call("asr", "/audio/transcriptions", { body: form }, MS.stt, "P1");
+        const j = await call("asr", "/audio/transcriptions", { body: form }, ms.stt, "P1");
         return { text: str(j.text)?.trim() || input.typed || "", ms: since(t0) };
       } catch { return mock.transcribe(input); }
     },
     async parse(text, ctx) {
       const t0 = now();
       try {
-        const j = await chat("fast", "Extract the air traffic control clearances in one radio transmission. Callsigns as spoken, e.g. 'BAYLINE 646', 'RESCUE 9'. Runways like '28L', taxiways like 'P'.", text, "ParsedRadioCall", CLEARANCE_SCHEMA, MS.parse, "P1");
+        const j = await chat("fast", "Extract only the clearances actually spoken in this one air traffic control radio transmission. Copy callsigns, runways and taxiways exactly as heard; never invent them. If the transmission holds no instruction or readback, return an empty clearances array.", text, "ParsedRadioCall", CLEARANCE_SCHEMA, ms.parse, "P1");
         const first = (Array.isArray(j.clearances) ? j.clearances : [])[0] as Record<string, unknown> | undefined;
         const got = first ? clean(first) : {};
         const baseParse = parseText(text, ctx);
+        if (got.runway && !RUNWAY_ENDS.has(got.runway) && baseParse?.runway) got.runway = baseParse.runway; // "ONE LEFT" -> "1L"
+        // a model can invent: no rule may fire on a callsign or runway that is not plausible or not in the words heard
+        if (got.action && !plausible(got, text)) got.confidence = Math.min(got.confidence ?? 0, 0.5);
         const clearance = got.action || baseParse ? { speaker: ctx.speaker, callsign: "", confidence: 0, ...baseParse, ...got, t: ctx.t } as Clearance : null;
         return { clearance, ms: since(t0) };
       } catch { return mock.parse(text, ctx); }
@@ -140,17 +154,19 @@ function createGatewayAgent(baseUrl: string, audioBase?: string): AgentPort {
     async judge(conflict, ctx) {
       const t0 = now();
       try {
-        const j = await chat("reason", "You rate a runway conflict that a deterministic rule already confirmed. You may raise severity, never dismiss it. Explain why in at most two sentences.", JSON.stringify({ conflict, alert: ctx.text }), "SeverityAssessment", SEVERITY_SCHEMA, MS.judge, "P2", { "X-Coalesce-Key": ctx.alertId });
+        const j = await chat("reason", "You rate a runway conflict that a deterministic rule already confirmed. You may raise severity, never dismiss it. Explain why in at most two sentences.", JSON.stringify({ conflict, alert: ctx.text }), "SeverityAssessment", SEVERITY_SCHEMA, ms.judge, "P2", { "X-Coalesce-Key": ctx.alertId });
         return { severity: GW_SEVERITY[str(j.severity) ?? ""] ?? conflict.severity_hint, reasoning: str(j.why) ?? reasoning(conflict), ms: since(t0), outbox: "mock" };
       } catch { return mock.judge(conflict, ctx); }
     },
   };
 }
 
-export function createHttpAgent({ baseUrl, sttPath = "/stt", parsePath = "/parse", conflictPath = "/conflict", audioBase }: {
+export function createHttpAgent({ baseUrl, sttPath = "/stt", parsePath = "/parse", conflictPath = "/conflict", audioBase, timeouts = {} }: {
   baseUrl: string; sttPath?: string; parsePath?: string; conflictPath?: string; audioBase?: string;
+  timeouts?: { stt?: number; parse?: number; judge?: number }; // ms per stage, e.g. a longer parse when the gateway is across ZeroTier
 }): AgentPort {
-  if (/\/v1\/?$/.test(baseUrl)) return createGatewayAgent(baseUrl, audioBase); // the README's base URL form
+  const ms = { stt: timeouts.stt ?? MS.stt, parse: timeouts.parse ?? MS.parse, judge: timeouts.judge ?? MS.judge };
+  if (/\/v1\/?$/.test(baseUrl)) return createGatewayAgent(baseUrl, audioBase, ms); // the README's base URL form
   const mock = createMockAgent();
   let downUntil = 0;
   const post = async (path: string, body: BodyInit, ms: number, type = "application/json"): Promise<Reply> => {
@@ -168,15 +184,15 @@ export function createHttpAgent({ baseUrl, sttPath = "/stt", parsePath = "/parse
       const t0 = now();
       try {
         const j = input.audio
-          ? await post(sttPath, input.audio, MS.stt, input.mime ?? "audio/webm")
-          : await post(sttPath, JSON.stringify({ text: input.typed, audioUrl: input.audioUrl }), MS.stt);
+          ? await post(sttPath, input.audio, ms.stt, input.mime ?? "audio/webm")
+          : await post(sttPath, JSON.stringify({ text: input.typed, audioUrl: input.audioUrl }), ms.stt);
         return { text: str(j.text) ?? str(j.transcript) ?? input.typed ?? "", ms: since(t0) };
       } catch { return mock.transcribe(input); }
     },
     async parse(text, ctx) {
       const t0 = now();
       try {
-        const j = await post(parsePath, JSON.stringify({ text }), MS.parse);
+        const j = await post(parsePath, JSON.stringify({ text }), ms.parse);
         const got = clean((j.clearance && typeof j.clearance === "object" ? j.clearance : j) as Record<string, unknown>);
         const base = parseText(text, ctx); // fills whatever fields the live parser left out
         // shortcut: a live clearance with no confidence and no regex match gets 0 (amber), until Chris always sends one
@@ -187,7 +203,7 @@ export function createHttpAgent({ baseUrl, sttPath = "/stt", parsePath = "/parse
     async judge(conflict, ctx) {
       const t0 = now();
       try {
-        const j = await post(conflictPath, JSON.stringify({ conflict, alertId: ctx.alertId, text: ctx.text }), MS.judge);
+        const j = await post(conflictPath, JSON.stringify({ conflict, alertId: ctx.alertId, text: ctx.text }), ms.judge);
         return {
           severity: SEVERITIES.find((s) => s === j.severity) ?? conflict.severity_hint,
           text: str(j.text),

@@ -1,5 +1,5 @@
 // Engine orchestrator: owns WorldState and drives clock -> sim -> pipeline -> checker -> agent. Isomorphic.
-import type { Alert, Call, OutboxItem, ScenarioId, Stage, WorldState } from "@/lib/contract";
+import type { Alert, Call, OutboxItem, ScenarioId, Stage, Track, Weather, WorldState } from "@/lib/contract";
 import type { ActiveClearances, AgentPort, CreateEngine, RawCall } from "@/engine/types";
 import { createSim } from "@/engine/sim";
 import { createAirfield } from "@/engine/airfield";
@@ -7,6 +7,7 @@ import { runCall } from "@/engine/pipeline";
 
 const TICK_MS = 250;
 const MAX_CALLS = 40;
+const LIVE_STALE_MS = 15_000; // live feed counts as flowing while a frame arrived this recently
 const iso = (ms: number) => new Date(ms).toISOString();
 const at = Date.parse;
 
@@ -25,6 +26,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
   const latencies: number[] = [];
   const unevaluated = new Set<string>();     // calls checked since the last evaluate(): only a detection one of them raises gets a latency
   let active: ActiveClearances = {}, pending: RawCall[] = [];
+  let liveTracks: Track[] = [], liveWeather: Weather | undefined, liveAt = 0; // latest live feed (scenario "live")
   let simMs = 0, prevMs = 0, lastReal = Date.now(), ticks = 0, epoch = 0, seq = 0, holdEval = false;
   let timer: ReturnType<typeof setInterval> | undefined;
   let world = blank(), snap = world;
@@ -40,8 +42,10 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
   const emit = () => { snap = structuredClone(world); subs.forEach((f) => f(snap)); };
   const strips = () => { world.strips = airfield.deriveStrips(world, active); };
 
+  const isLive = () => world.clock.scenario === "live";
   function frame() {
-    const f = sim.frame(world.clock.simT);
+    // live: the latest ADS-B frame, and the last METAR heard (the previous weather until one arrives)
+    const f = isLive() ? { tracks: liveTracks, weather: liveWeather ?? world.weather } : sim.frame(world.clock.simT);
     world.tracks = f.tracks;
     world.weather = f.weather;
     world.weatherStatus = airfield.weatherStatus(f.weather, world.config);
@@ -52,11 +56,12 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
     active = {}; pending = []; open.clear(); endReal.clear(); unevaluated.clear(); holdEval = false;
     ending = scenario === "incident" ? ending ?? "with" : undefined;
     sim.load(scenario, ending);
-    simMs = at(sim.startT());
+    if (scenario === "live" && Date.now() - liveAt > LIVE_STALE_MS) liveTracks = []; // never show an old session's traffic as live
+    simMs = scenario === "live" ? Date.now() : at(sim.startT());
     prevMs = simMs - 1; // callsBetween is (from, to]: keep a call that starts exactly at startT
     world = {
       ...world,
-      clock: { ...world.clock, simT: sim.startT(), playing: true, scenario, ending },
+      clock: { ...world.clock, simT: iso(simMs), playing: true, scenario, ending },
       config: { ...sim.config(), overridden: false },
       calls: [], alerts: [], caption: null,
     };
@@ -65,12 +70,14 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
   }
 
   function tick() {
-    const real = Date.now(), { playing, speed } = world.clock, endMs = at(sim.endT());
-    if (playing) simMs = Math.min(simMs + (real - lastReal) * speed, endMs);
-    if (simMs >= endMs) world.clock.playing = false;
+    const real = Date.now(), { playing, speed } = world.clock, endMs = at(sim.endT()), live = isLive();
+    if (live) simMs = real; // the wall clock: speed and the recording's end do not apply
+    else if (playing) simMs = Math.min(simMs + (real - lastReal) * speed, endMs);
+    if (!live && simMs >= endMs) world.clock.playing = false;
     world.clock.simT = iso(simMs);
+    world.ui.network = live && real - liveAt < LIVE_STALE_MS ? "online" : network;
     frame();
-    for (const raw of sim.callsBetween(iso(prevMs), world.clock.simT)) {
+    for (const raw of live ? [] : sim.callsBetween(iso(prevMs), world.clock.simT)) {
       world.caption = { callId: raw.id, freq: raw.freq, from: raw.from, to: raw.to, text: raw.text, t: raw.t };
       pending.push(raw);
     }
@@ -206,8 +213,8 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
     command(c) {
       const { scenario, ending } = world.clock;
       switch (c.cmd) {
-        case "play": if (simMs >= at(sim.endT())) load(scenario, ending); world.clock.playing = true; break;
-        case "pause": world.clock.playing = false; break;
+        case "play": if (scenario !== "live" && simMs >= at(sim.endT())) load(scenario, ending); world.clock.playing = true; break;
+        case "pause": if (scenario !== "live") world.clock.playing = false; break; // live never pauses
         case "speed": world.clock.speed = c.value; break;
         case "scenario": load(c.value, c.ending); break;
         case "restart": load(scenario, ending); break;
@@ -248,6 +255,11 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
       const t = world.clock.simT, id = `MIC${++seq}`;
       endReal.set(id, Date.now());
       await run({ id, t, endT: t, freq: "TWR", speaker: "tower", from: "TWR", to: "", text: "", source: "scenario" }, { audio, mime });
+    },
+    live({ tracks, weather }) {
+      liveTracks = tracks;
+      liveWeather = weather ?? liveWeather;
+      liveAt = Date.now(); // the next tick shows it
     },
     start() {
       if (timer) return;

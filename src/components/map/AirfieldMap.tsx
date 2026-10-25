@@ -12,7 +12,7 @@ type LonLat = [number, number];
 type XY = [number, number];
 type Frame = { s: number; tx: number; ty: number };
 type Pos = { p: XY; h: number };
-type Motion = { from: Pos; to: Pos; t0: number };
+type Motion = { from: Pos; to: Pos; t0: number; v: number }; // v: ground speed in m/s, for dead reckoning between fixes
 
 const DUR = 250; // ms, one 4 Hz world update
 const CHEVRON = "M0,-12L9,9L0,4L-9,9Z"; // points up = heading VIEW_BEARING
@@ -91,10 +91,16 @@ const px = (f: Frame, p: XY): XY => [p[0] * f.s + f.tx, p[1] * f.s + f.ty];
 const pathD = (f: Frame, ls: XY[][], close = false) =>
   ls.map((l) => "M" + l.map((p) => px(f, p).map((n) => n.toFixed(1)).join(",")).join("L") + (close ? "Z" : "")).join("");
 
+const MAX_COAST_S = 6; // live ADS-B fixes arrive every ~5 s; coast along heading at speed until the next one
 function at(m: Motion, now: number): Pos {
   const a = Math.min(1, (now - m.t0) / DUR);
   const dh = ((m.to.h - m.from.h + 540) % 360) - 180;
-  return { p: [m.from.p[0] + (m.to.p[0] - m.from.p[0]) * a, m.from.p[1] + (m.to.p[1] - m.from.p[1]) * a], h: m.from.h + dh * a };
+  const coast = Math.min(MAX_COAST_S, Math.max(0, (now - m.t0 - DUR) / 1000)) * m.v;
+  const dir = ((m.to.h - VIEW_BEARING) * Math.PI) / 180; // screen space: up is VIEW_BEARING, y grows down
+  return {
+    p: [m.from.p[0] + (m.to.p[0] - m.from.p[0]) * a + Math.sin(dir) * coast, m.from.p[1] + (m.to.p[1] - m.from.p[1]) * a - Math.cos(dir) * coast],
+    h: m.from.h + dh * a,
+  };
 }
 
 const signW = (text: string, size: number) => Math.round(text.length * size * 0.6 + size);
@@ -205,7 +211,10 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
     const now = performance.now(), next = new Map<string, Motion>();
     for (const t of tracks ?? []) {
       const to = { p: project([t.lon, t.lat]), h: t.heading }, cur = motion.current.get(t.id);
-      next.set(t.id, { from: cur ? at(cur, now) : to, to, t0: now });
+      const v = t.source === "live" && t.speed_kt > 30 ? t.speed_kt * 0.514444 : 0; // only live fixes coast; a paused replay stays put
+      // same fix as last tick (live data between polls): keep coasting instead of restarting from it
+      if (cur && cur.to.p[0] === to.p[0] && cur.to.p[1] === to.p[1]) next.set(t.id, cur);
+      else next.set(t.id, { from: cur ? at(cur, now) : to, to, t0: now, v });
     }
     motion.current = next;
   }, [tracks]);

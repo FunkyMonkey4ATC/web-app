@@ -77,6 +77,7 @@ export interface Engine {
   feedback(alertId: string, response: "ack" | "false_alarm"): void;
   agentAlert(a: AgentAlert): void;                    // Chris's agent posting a finished alert back
   micUtterance(audio: ArrayBuffer, mime: string): Promise<void>;
+  live(update: { tracks: Track[]; weather?: Weather }): void; // latest live ADS-B frame (and METAR), used while scenario is "live"
   start(): void;
   stop(): void;
 }

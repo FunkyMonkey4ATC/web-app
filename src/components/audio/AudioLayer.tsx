@@ -4,6 +4,7 @@ import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import type { Call, WorldState } from "@/lib/contract";
 import { actions } from "@/lib/useWorld";
 import { newVad, vadStep } from "./vad";
+import { toWav16k } from "./wav";
 
 type Mic = "off" | "listening" | "speech";
 const INITIAL = { muted: false, mic: "off" as Mic };
@@ -43,7 +44,7 @@ function listen(ac: AudioContext, stream: MediaStream) {
     const chunks: Blob[] = [], rec = new MediaRecorder(stream, { mimeType: "audio/webm" });
     let send = false;
     rec.ondataavailable = (e) => chunks.push(e.data);
-    rec.onstop = () => { if (send) void actions.mic(new Blob(chunks, { type: "audio/webm" })); };
+    rec.onstop = () => { if (send) void toWav16k(new Blob(chunks, { type: "audio/webm" })).then(actions.mic, (e) => console.warn("Mic audio not decodable", e)); };
     rec.start();
     stop = (s) => { send = s; rec.stop(); stop = null; set({ mic: "listening" }); };
   };

@@ -31,6 +31,8 @@ function Section({ title, className = "", children }: { title: string; className
 
 export default function Operator() {
   const { world, mode, command } = useWorld();
+  // offline demo: live traffic needs internet, so the button cannot strand the stage on an empty map
+  const liveBlocked = mode === "local" || (world?.ui.network === "offline" && world.clock.scenario !== "live");
   const [draft, setDraft] = useState<number | null>(null); // slider position until the world echoes it back
   const [confirmReset, setConfirmReset] = useState(false);
   const threshold = world?.ui.threshold;
@@ -77,6 +79,16 @@ export default function Operator() {
               {s.label}
             </button>
           ))}
+        </div>
+        <div className="mt-4 border-t border-seam pt-4">
+          <button aria-pressed={clock.scenario === "live"} disabled={liveBlocked} className={`${btn} w-full text-left`}
+            aria-describedby="live-note" onClick={() => command({ cmd: "scenario", value: "live" })}>
+            {SCENARIO_LABEL.live}
+          </button>
+          <p id="live-note" className="mt-1 text-sm text-ink-2">
+            Real aircraft from ADS-B, live. Speak clearances into the console mic.
+            {liveBlocked && <span className="block text-ink-3">{mode === "local" ? "Needs the GB10/local server and internet" : "Server started offline (demo mode). Restart it with NETWORK=online to use live traffic."}</span>}
+          </p>
         </div>
       </Section>
 

@@ -8,6 +8,7 @@ import { AudioLayer } from "@/components/audio/AudioLayer";
 import { Header } from "@/components/console/Header";
 import { AlertDock } from "@/components/console/AlertDock";
 import { StripBays } from "@/components/console/StripBays";
+import { TrackDetail } from "@/components/console/TrackDetail";
 import { Arrow } from "@/components/console/icons";
 
 const R1 = "crossing_on_landing_runway";
@@ -28,7 +29,10 @@ export default function ConsolePage() {
 
   const without = world?.clock.scenario === "incident" && world.clock.ending === "without";
   // "without" replays the night with no Ground Truth: never show a banner, whatever the engine emits.
-  const banners = !world || without ? [] : world.alerts.filter((a) => a.status === "active" && a.banner).sort((a, b) => b.t.localeCompare(a.t));
+  // Dock = active warnings only (cautions live on strips and the rail); a false alarm leaves at once.
+  const banners = !world || without ? [] : world.alerts
+    .filter((a) => a.status === "active" && a.banner && a.level === "warning" && a.response !== "false_alarm")
+    .sort((a, b) => b.t.localeCompare(a.t));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -75,8 +79,8 @@ export default function ConsolePage() {
   return (
     <main className="grid h-dvh grid-cols-1 grid-rows-[auto_1fr] gap-px overflow-hidden bg-seam">
       <Header world={world} />
-      <div className="grid min-h-0 grid-cols-[65fr_35fr] gap-px">
-        <div className="grid min-h-0 grid-rows-[1fr_auto] gap-px">
+      <div className="grid min-h-0 grid-cols-[minmax(0,65fr)_minmax(0,35fr)] gap-px">
+        <div className="grid min-h-0 min-w-0 grid-rows-[1fr_auto] gap-px">
           <section aria-label="Airfield, tower view" className="relative min-h-0 overflow-hidden bg-ground">
             <div className="absolute inset-0">
               <AirfieldMap world={world} selectedTrackId={selected} zoom={zoom} onSelect={setSelected} />
@@ -86,12 +90,12 @@ export default function ConsolePage() {
               {closing && <p className="border-b border-seam bg-panel px-6 py-2.5 text-lg font-semibold">{closing}</p>}
             </div>
           </section>
-          <footer className="flex h-16 items-center gap-5 bg-panel px-6">
+          <footer className="flex h-20 min-w-0 items-center gap-5 bg-panel px-6">
             {c ? (
               <>
-                <span className="flex items-center gap-1.5 font-semibold text-clear">{spoken(c.from)}<Arrow rotate={90} />{spoken(c.to)}</span>
-                <span className="truncate text-xl font-medium">“{c.text}”</span>
-                <span className="ml-auto text-sm text-ink-2">{ZULU(c.t)}</span>
+                <span className="flex shrink-0 items-center gap-1.5 font-semibold whitespace-nowrap text-clear">{spoken(c.from)}<Arrow rotate={90} />{spoken(c.to)}</span>
+                <span title={c.text} className="line-clamp-2 min-w-0 flex-1 text-lg leading-snug font-medium">“{c.text}”</span>
+                <span className="shrink-0 text-sm text-ink-2">{ZULU(c.t)}</span>
               </>
             ) : (
               <span className="text-ink-3">Listening to tower and ground</span>
@@ -109,6 +113,7 @@ export default function ConsolePage() {
       >
         <p className="max-w-3xl text-center text-2xl font-semibold text-white">LaGuardia, March 22, 2026, 23:37 EDT. Two pilots died.</p>
       </div>
+      {selected && <TrackDetail world={world} trackId={selected} onClose={() => setSelected(null)} />}
       <AudioLayer world={world} />
     </main>
   );

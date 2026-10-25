@@ -17,6 +17,8 @@ const PLANS = [
 
 const SCENARIO_CHIP: Partial<Record<ScenarioId, string>> = { incident: "Incident replay", no_clearance: "No clearance", visibility: "Visibility" };
 
+const REPLAY = "Real SFO positions and weather recorded 25 Oct 2026, 14:12–14:42 PDT, replayed. Radio calls scripted.";
+
 const FRACTION: Record<number, string> = { 0.25: "1/4", 0.5: "1/2", 0.75: "3/4" };
 function vis(sm: number): string {
   const whole = Math.floor(sm), f = FRACTION[sm - whole];
@@ -105,8 +107,13 @@ export function Header({ world }: { world: WorldState }) {
 
       <div className="flex min-w-0 flex-1 flex-col items-end justify-center gap-1.5 px-4">
         <span className="flex items-center gap-2 text-sm font-bold">
-          {SCENARIO_CHIP[clock.scenario] && (
-            <span className="rounded-sm border border-dashed border-ink-2 px-1.5 text-ink-2">SIM · {SCENARIO_CHIP[clock.scenario]}</span>
+          {/* Never look live: solid = recorded, dashed = simulated (DESIGN.md). */}
+          {clock.scenario === "live" ? (
+            <span title="Real aircraft from ADS-B (adsb.lol), positions a few seconds old. Radio calls come from the console mic." className="rounded-sm border border-ink px-1.5 text-ink">Live · SFO ADS-B</span>
+          ) : (
+            <span title={REPLAY} className={`rounded-sm border border-ink-2 px-1.5 text-ink-2 ${SCENARIO_CHIP[clock.scenario] ? "border-dashed" : ""}`}>
+              {SCENARIO_CHIP[clock.scenario] ? `SIM · ${SCENARIO_CHIP[clock.scenario]}` : "Recorded replay"}
+            </span>
           )}
           <span className="flex items-center gap-2 rounded border-2 border-ink-2 px-2 tracking-wider">
             <Dot filled={ui.network === "online"} /> {ui.network === "online" ? "ONLINE" : "OFFLINE"}

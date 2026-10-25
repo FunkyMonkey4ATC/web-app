@@ -27,7 +27,7 @@ export interface Track {
   lon: number;
   speed_kt: number;
   heading: number;
-  source: "recorded" | "simulated";
+  source: "recorded" | "simulated" | "live";
   type?: string;              // "A320", "VEH"
   alt_ft?: number;            // undefined or 0 on the ground
   estimated?: boolean;        // radio-only vehicle placed from its last clearance (EST)
@@ -40,7 +40,7 @@ export interface Weather {
   wind_kt: number;
   visibility_sm: number;
   ceiling_ft: number | null;
-  source: "recorded" | "simulated";
+  source: "recorded" | "simulated" | "live";
 }
 
 export type RuleId =
@@ -133,12 +133,13 @@ export interface Strip {
   gate?: string;              // simulated gate number (SIM)
 }
 
-export type ScenarioId = "normal" | "incident" | "no_clearance" | "visibility";
+export type ScenarioId = "normal" | "incident" | "no_clearance" | "visibility" | "live";
 export const SCENARIO_LABEL: Record<ScenarioId, string> = {
   normal: "Normal traffic",
   incident: "LaGuardia sequence, restaged at SFO",
   no_clearance: "Vehicle enters a runway with no clearance",
   visibility: "Visibility drops below minimums",
+  live: "Live SFO traffic", // real ADS-B and METAR on the wall clock; no scripted calls, only the mic
 };
 
 export interface OutboxItem { alertId: string; t: Iso; text: string; status: "queued" | "sent" | "failed" | "mock" }

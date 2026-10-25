@@ -34,10 +34,24 @@ Mic: browsers allow the microphone only on `localhost` or HTTPS. The console on 
 | `AGENT_STT_PATH` | `/stt` | Speech-to-text path on the agent |
 | `AGENT_PARSE_PATH` | `/parse` | Call-parsing path on the agent |
 | `AGENT_CONFLICT_PATH` | `/conflict` | Conflict-review path on the agent |
-| `NETWORK` | `offline` | `online` shows the network as online in the UI |
+| `NETWORK` | `offline` | `online` shows the network as online in the UI. `offline` also stops live mode from fetching |
+| `AGENT_STT_MS`, `AGENT_PARSE_MS`, `AGENT_JUDGE_MS` | `3000`, `3000`, `8000` | Time limit per agent stage before the mock answers |
 | `AGENT_CMD` | unset | `gb10-start.sh` only: shell command that starts the agent |
 
 Set `NEXT_TELEMETRY_DISABLED=1` so Next never tries to phone home (`gb10-start.sh` does this).
+
+## Live mode
+
+Real SFO traffic instead of the replay: aircraft and vehicles from ADS-B (adsb.lol, OpenSky as fallback) every 5 s and the KSFO METAR every 5 minutes, on the wall clock. There are no scripted calls: you are the controller, and every clearance you speak into the console mic runs through the same speech, parse and rules. It needs internet for ADS-B and the METAR.
+
+On this Mac or on the GB10:
+
+```bash
+NETWORK=online AGENT_URL=http://<gb10>:4000/v1 npm run dev     # or the same variables with scripts/gb10-start.sh
+# add AGENT_PARSE_MS=8000 when the gateway is across ZeroTier
+```
+
+Open `http://localhost:<port>/console` in Chrome (the mic needs `localhost` or HTTPS), pick **Live SFO traffic** on `/operator`, and speak clearances, such as "United 1228, runway two eight left, cleared to land". Pick any other scenario to go back to the replay.
 
 ## Radio audio
 

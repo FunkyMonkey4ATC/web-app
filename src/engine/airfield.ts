@@ -20,11 +20,14 @@ const R1: Record<string, [string, string]> = { // rule 1 crosser actions: [alert
   line_up_and_wait: ["lining up on", "line-up"],
 };
 const ON_IT: Record<string, string> = { cleared_to_land: "landing on", cleared_for_takeoff: "taking off from", line_up_and_wait: "lined up on", cross_runway: "crossing" };
-const SPOKEN: Record<string, string> = { BYL: "Bayline", FGX: "Fog Express", TML: "Tamal", RESCUE: "Rescue", OPS: "Ops" };
+const SPOKEN: Record<string, string> = {
+  BYL: "Bayline", FGX: "Fog Express", TML: "Tamal", RESCUE: "Rescue", OPS: "Ops",
+  UAL: "United", AAL: "American", DAL: "Delta", ASA: "Alaska", SWA: "Southwest", SKW: "SkyWest", JBU: "JetBlue", HAL: "Hawaiian", ACA: "Air Canada",
+};
 const APRONS = FEATURES.filter((f) => f.properties.aeroway === "apron" && f.geometry.type === "Polygon")
   .map((f) => ({ name: f.properties.name ?? "", ring: (f.geometry.coordinates as LonLat[][])[0] }));
 
-const spoken = (cs: string) => { const m = cs.match(/^([A-Z]+)(\d\w*)$/); return m && SPOKEN[m[1]] ? `${SPOKEN[m[1]]} ${m[2]}` : cs; };
+export const spoken = (cs: string) => { const m = cs.match(/^([A-Z]+)(\d\w*)$/); return m && SPOKEN[m[1]] ? `${SPOKEN[m[1]]} ${m[2]}` : cs; };
 const pos = (t: Track): LonLat => [t.lon, t.lat];
 const rid = (name?: string) => (name ? runwayOf(name)?.id : undefined);
 const angle = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);

@@ -75,7 +75,7 @@ async function run(id: ScenarioId) {
 
 async function main() {
   const results = [];
-  for (const id of Object.keys(SCENARIO_LABEL) as ScenarioId[]) results.push(await run(id));
+  for (const id of Object.keys(SCENARIO_LABEL) as ScenarioId[]) if (id !== "live") results.push(await run(id)); // live never ends and needs the network
   const falseWarningsNormal = results.find((r) => r.id === "normal")!.warnings; // normal traffic has no conflicts by design
   const medianStageMs = Object.fromEntries(STAGES.map((k) => [k, median(stageMs[k])]));
 
