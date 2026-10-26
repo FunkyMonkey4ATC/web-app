@@ -53,7 +53,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
 
   function load(scenario: ScenarioId, ending?: "with" | "without") {
     epoch++; // late pipeline results from the previous run are dropped
-    active = {}; pending = []; open.clear(); endReal.clear(); unevaluated.clear(); holdEval = false;
+    active = {}; pending = []; open.clear(); endReal.clear(); unevaluated.clear(); latencies.length = 0; holdEval = false;
     ending = scenario === "incident" ? ending ?? "with" : undefined;
     sim.load(scenario, ending);
     if (scenario === "live" && Date.now() - liveAt > LIVE_STALE_MS) liveTracks = []; // never show an old session's traffic as live
@@ -63,7 +63,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
       ...world,
       clock: { ...world.clock, simT: iso(simMs), playing: true, scenario, ending },
       config: { ...sim.config(), overridden: false },
-      calls: [], alerts: [], caption: null,
+      calls: [], alerts: [], caption: null, stats: blank().stats, // a new run counts from zero
     };
     frame();
     strips();
@@ -218,7 +218,7 @@ export const createEngine: CreateEngine = ({ agent, network }) => {
         case "speed": world.clock.speed = c.value; break;
         case "scenario": load(c.value, c.ending); break;
         case "restart": load(scenario, ending); break;
-        case "reset": world = blank(); latencies.length = 0; load("normal"); break;
+        case "reset": world = blank(); load("normal"); break;
         case "jump": {
           const t = sim.jumpTarget(c.value);
           if (!t) break;

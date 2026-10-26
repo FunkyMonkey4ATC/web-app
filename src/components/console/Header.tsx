@@ -36,6 +36,7 @@ export function Header({ world }: { world: WorldState }) {
   const { clock, config, weather: wx, weatherStatus: ws, ui } = world;
   const same = (a: string[], b: string[]) => a.join() === b.join();
   const hw = ws.headwindKt;
+  const ceiling = wx.ceiling_ft == null ? "no ceiling" : `ceiling ${wx.ceiling_ft.toLocaleString("en-US")} ft`;
   return (
     <header className="flex h-[84px] gap-px overflow-hidden whitespace-nowrap [&>*]:bg-panel">
       <div className="flex flex-col justify-center gap-1 px-4">
@@ -86,7 +87,7 @@ export function Header({ world }: { world: WorldState }) {
         </div>
       </div>
 
-      <div className="flex flex-col justify-center gap-0.5 px-4" title={`Demo landing minimums: ceiling ${ws.minimums.ceiling_ft} ft, visibility ${vis(ws.minimums.visibility_sm)} SM`}>
+      <div className="flex min-w-0 flex-col justify-center gap-0.5 overflow-hidden px-4" title={`Demo landing minimums: ceiling ${ws.minimums.ceiling_ft} ft, visibility ${vis(ws.minimums.visibility_sm)} SM`}>
         <span className="flex items-center gap-2 text-base font-semibold">
           {wx.wind_kt ? (
             <>
@@ -95,17 +96,19 @@ export function Header({ world }: { world: WorldState }) {
             </>
           ) : "Wind calm"}
           <span className="text-ink-2">·</span> {vis(wx.visibility_sm)} SM
-          <span className="text-ink-2">·</span> {wx.ceiling_ft == null ? "no ceiling" : `ceiling ${wx.ceiling_ft.toLocaleString("en-US")} ft`}
+          <span className="flex items-center gap-2 max-[1360px]:hidden"><span className="text-ink-2">·</span> {ceiling}</span>
         </span>
-        <span className="flex items-center gap-2 text-sm text-ink-2">
+        <span className="flex min-w-0 items-center gap-2 text-sm text-ink-2">
+          {/* Below 1360px the ceiling moves down here so the right-hand chips never overlap the weather. */}
+          <span className="shrink-0 min-[1360px]:hidden">{ceiling} ·</span>
           {ws.belowMinimums
-            ? <span className="flex items-center gap-1.5 font-bold text-caution"><Tri outline /> {ws.runway} below minimums</span>
-            : <span>{ws.runway} above minimums</span>}
+            ? <span className="flex min-w-0 items-center gap-1.5 overflow-hidden font-bold text-caution"><Tri outline /> {ws.runway} below minimums</span>
+            : <span className="truncate">{ws.runway} above minimums</span>}
           <span className="max-[1600px]:hidden">· {hw >= 0 ? `head ${hw}` : `tail ${-hw}`} · cross {ws.crosswindKt} kt</span>
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col items-end justify-center gap-1.5 px-4">
+      <div className="flex flex-1 flex-col items-end justify-center gap-1.5 px-4">
         <span className="flex items-center gap-2 text-sm font-bold">
           {/* Never look live: solid = recorded, dashed = simulated (DESIGN.md). */}
           {clock.scenario === "live" ? (

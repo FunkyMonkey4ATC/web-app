@@ -44,8 +44,8 @@ function Banner({ a, mock }: { a: Alert; mock: boolean }) {
           <button onClick={() => actions.feedback(a.id, "ack")} className="flex h-10 shrink-0 items-center gap-3 rounded bg-ink px-3.5 text-base font-semibold text-ground">
             Acknowledge <Kbd k="A" />
           </button>
-          {a.countdown && <span className="text-base font-bold text-ink">{a.countdown.label}</span>}
-          <span>{[latency(a, mock), ZULU(a.t)].filter(Boolean).join(" · ")}</span>
+          {a.countdown && <span className="shrink-0 whitespace-nowrap text-base font-bold text-ink">{a.countdown.label}</span>}
+          <span className="min-w-0 truncate">{[latency(a, mock), ZULU(a.t)].filter(Boolean).join(" · ")}</span>
           <button onClick={() => actions.feedback(a.id, "false_alarm")} className="ml-auto flex h-10 shrink-0 items-center gap-3 rounded border border-ink-2 px-3.5 text-base font-semibold text-ink">
             False alarm <Kbd k="F" />
           </button>

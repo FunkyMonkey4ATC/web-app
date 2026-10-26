@@ -1,5 +1,5 @@
 "use client";
-// Radio playback, the warning chime and the always-on mic. Mute and mic state are shared by AudioLayer and AudioControls.
+// Radio playback, the warning chime and the mic (toggled from its chip). Mute and mic state are shared by AudioLayer and AudioControls.
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import type { Call, WorldState } from "@/lib/contract";
 import { actions } from "@/lib/useWorld";
@@ -17,6 +17,7 @@ let ctx: AudioContext | null = null;
 let clip: { el: HTMLAudioElement; call: Call } | null = null;
 let quietUntil = 0;
 let starting = false;
+let stopMic: (() => void) | null = null;
 // Our own speaker output must not come back in through the mic as a second copy of the call.
 const busy = () => performance.now() < quietUntil || (clip !== null && !clip.el.paused && !clip.el.muted);
 
@@ -36,7 +37,8 @@ async function enableMic() {
 function listen(ac: AudioContext, stream: MediaStream) {
   const an = ac.createAnalyser();
   an.fftSize = 1024;
-  ac.createMediaStreamSource(stream).connect(an);
+  const src = ac.createMediaStreamSource(stream);
+  src.connect(an);
   const buf = new Float32Array(an.fftSize), vad = newVad();
   let stop: ((send: boolean) => void) | null = null;
 
@@ -59,7 +61,9 @@ function listen(ac: AudioContext, stream: MediaStream) {
     else if (ev === "confirm") set({ mic: "speech" });
     else if (ev) stop?.(ev === "finish");
   }, 30);
-  stream.getAudioTracks()[0].onended = () => { clearInterval(timer); stop?.(false); set({ mic: "off" }); }; // mic unplugged
+  const off = () => { clearInterval(timer); stop?.(false); src.disconnect(); stream.getTracks().forEach((t) => t.stop()); stopMic = null; set({ mic: "off" }); };
+  stopMic = off;
+  stream.getAudioTracks()[0].onended = off; // mic unplugged
   set({ mic: "listening" });
 }
 
@@ -97,13 +101,14 @@ function sync(clock: WorldState["clock"], muted: boolean) {
   if (el.paused) el.play().catch(() => {}); // blocked until the first gesture; the next tick retries
 }
 
-/** Plays radio clips and the warning chime, and starts the mic on the first gesture. Renders nothing. */
+/** Plays radio clips and the warning chime. Renders nothing. */
 export function AudioLayer({ world }: { world: WorldState | null }) {
   const { muted } = useAudio();
   const prev = useRef<{ calls: Set<string>; warns: Set<string> } | null>(null);
 
   useEffect(() => {
-    const onGesture = () => void enableMic();
+    // the chime needs an AudioContext made inside a gesture; the mic itself starts only from its chip
+    const onGesture = () => { ctx ??= new AudioContext(); void ctx.resume(); };
     addEventListener("pointerdown", onGesture, { once: true });
     addEventListener("keydown", onGesture, { once: true });
     return () => {
@@ -159,7 +164,9 @@ export function AudioControls() {
           {micInner}
         </button>
       ) : (
-        <span className={`${CHIP} ${mic === "speech" ? "border-clear text-clear" : "border-ink-2 text-ink-2"}`}>{micInner}</span>
+        <button type="button" onClick={() => stopMic?.()} title="Turn off the microphone" className={`${CHIP} hover:bg-raised ${mic === "speech" ? "border-clear text-clear" : "border-ink-2 text-ink-2"}`}>
+          {micInner}
+        </button>
       )}
     </div>
   );

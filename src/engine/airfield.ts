@@ -321,7 +321,7 @@ export const createAirfield: CreateAirfield = () => {
         const last = w.calls.find((c) => c.clearance?.callsign === cs || c.from === cs || c.to === cs);
         // a low-confidence call never enters `active`, but the strip shows what was heard, flagged by its confidence
         const shown = last?.lowConfidence && last.clearance && last.clearance.action !== "readback" ? last.clearance : e?.clearance;
-        const alerts = w.alerts.filter((a) => a.status === "active" && a.banner && (a.partyTrackIds.includes(t.id) || a.conflict.parties.includes(cs)));
+        const alerts = w.alerts.filter((a) => a.status === "active" && a.banner && a.response !== "false_alarm" && (a.partyTrackIds.includes(t.id) || a.conflict.parties.includes(cs)));
         const arr = bay === "arriving" ? approachEnd(w, t, e?.clearance) : undefined;
         const apron = bay === "at_gate" ? APRONS.find((ap) => inRing(p, ap.ring)) : undefined;
         strips.push({

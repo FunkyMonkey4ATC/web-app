@@ -9,6 +9,7 @@ import { Header } from "@/components/console/Header";
 import { AlertDock } from "@/components/console/AlertDock";
 import { StripBays } from "@/components/console/StripBays";
 import { TrackDetail } from "@/components/console/TrackDetail";
+import { CaptionHistory } from "@/components/console/CaptionHistory";
 import { Arrow } from "@/components/console/icons";
 
 const R1 = "crossing_on_landing_runway";
@@ -85,7 +86,7 @@ export default function ConsolePage() {
             <div className="absolute inset-0">
               <AirfieldMap world={world} selectedTrackId={selected} zoom={zoom} onSelect={setSelected} />
             </div>
-            <div className="absolute inset-x-0 top-0 z-10">
+            <div id="alert-dock" className="absolute inset-x-0 top-0 z-10">
               <AlertDock alerts={banners} />
               {closing && <p className="border-b border-seam bg-panel px-6 py-2.5 text-lg font-semibold">{closing}</p>}
             </div>
@@ -98,8 +99,9 @@ export default function ConsolePage() {
                 <span className="shrink-0 text-sm text-ink-2">{ZULU(c.t)}</span>
               </>
             ) : (
-              <span className="text-ink-3">Listening to tower and ground</span>
+              <span className="flex-1 text-ink-3">{world.clock.scenario === "live" ? "Live · speak into the console mic" : "Waiting for the next radio call"}</span>
             )}
+            <CaptionHistory world={world} />
           </footer>
         </div>
         <div className="relative min-h-0 overflow-hidden bg-panel">

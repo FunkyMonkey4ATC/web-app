@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { BAY_LABEL, ZULU, spoken, type WorldState } from "@/lib/contract";
 import { spoken as callName } from "@/engine/airfield";
 import { Arrow, Tri } from "./icons";
@@ -21,10 +21,17 @@ export function TrackDetail({ world, trackId, onClose }: { world: WorldState; tr
     return () => back?.focus();
   }, []);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
+    // Capture phase + stopPropagation: Esc closes only this pop-up, never the rail or other window listeners.
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } };
+    addEventListener("keydown", onKey, true);
+    return () => removeEventListener("keydown", onKey, true);
   }, [onClose]);
+  // Sit below the alert dock (banners, acknowledged lines, closing line) so it never covers them; re-measured every render.
+  useLayoutEffect(() => {
+    const top = Math.max(96, (document.getElementById("alert-dock")?.getBoundingClientRect().bottom ?? 0) + 12);
+    panel.current!.style.top = `${top}px`;
+    panel.current!.style.maxHeight = `calc(100dvh - ${top + 12}px)`;
+  });
 
   const t = world.tracks.find((x) => x.id === trackId);
   const s = world.strips.find((x) => x.trackId === trackId);

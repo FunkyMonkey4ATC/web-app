@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LgaIncident } from "@/components/landing/LgaIncident";
-import { actions } from "@/lib/useWorld";
+import { useWorld } from "@/lib/useWorld";
 
 const btn = "inline-flex min-h-12 items-center rounded px-5 font-semibold";
 
 export default function Landing() {
   const router = useRouter();
+  const { mode, command } = useWorld();
 
   async function watch() {
-    await actions.command({ cmd: "scenario", value: "incident" });
+    // a shared server drives every screen, so only this tab's own engine may switch scenario
+    if (mode !== "server") await command({ cmd: "scenario", value: "incident" });
     router.push("/console");
   }
 

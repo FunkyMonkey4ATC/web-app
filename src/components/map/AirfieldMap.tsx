@@ -137,7 +137,7 @@ export function AirfieldMap({ world, selectedTrackId, onSelect, zoom = "field", 
   const arr = world?.config.arr ?? ["28L", "28R"];
   const arrKey = arr.join(",");
   const dep = world?.config.dep ?? [];
-  const warn = world?.alerts.find((a) => a.status === "active" && a.level === "warning" && a.banner);
+  const warn = world?.alerts.find((a) => a.status === "active" && a.level === "warning" && a.banner && a.response !== "false_alarm");
   const top = !hero && world?.alerts.some((x) => x.status === "active" && x.banner) ? DOCK : 0;
 
   // Framing holds still for the life of an alert; it changes only with zoom, the alert (and its dock), the config or the window.

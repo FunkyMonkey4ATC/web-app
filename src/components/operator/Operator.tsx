@@ -45,6 +45,7 @@ export default function Operator() {
   const { clock, ui } = world;
   const ending = clock.ending ?? "with";
   const isActive = (s: (typeof SCENARIOS)[number]) => clock.scenario === s.value && (s.value !== "incident" || ending === s.ending);
+  const live = clock.scenario === "live"; // real time: speed and pause do nothing
   const label = clock.scenario === "incident" ? `${SCENARIO_LABEL.incident} · ${ending} Ground Truth` : SCENARIO_LABEL[clock.scenario];
 
   return (
@@ -57,7 +58,7 @@ export default function Operator() {
         <div className="flex items-center justify-between gap-3">
           <span className="text-3xl font-semibold tabular-nums">{ZULU(clock.simT)}</span>
           <span className={`whitespace-nowrap rounded border-2 px-3 py-1 text-lg font-semibold ${clock.playing ? "border-clear text-clear" : "border-ink-2 text-ink"}`}>
-            {clock.playing ? "Playing" : "Paused"} · {clock.speed}x
+            {live ? "Live · real time" : `${clock.playing ? "Playing" : "Paused"} · ${clock.speed}x`}
           </span>
         </div>
         <p className="text-lg font-semibold sm:text-xl">{label}</p>
@@ -94,14 +95,14 @@ export default function Operator() {
 
       <Section title="Clock">
         <div className="grid grid-cols-2 gap-3">
-          <button className={btn} onClick={() => command(clock.playing ? { cmd: "pause" } : { cmd: "play" })}>
+          <button className={btn} disabled={live} onClick={() => command(clock.playing ? { cmd: "pause" } : { cmd: "play" })}>
             {clock.playing ? "Pause" : "Play"}
           </button>
           <button className={btn} onClick={() => command({ cmd: "restart" })}>Restart</button>
         </div>
         <div role="group" aria-label="Speed" className="mt-3 grid grid-cols-3 gap-3">
           {SPEEDS.map((s) => (
-            <button key={s} aria-pressed={clock.speed === s} className={btn} onClick={() => command({ cmd: "speed", value: s })}>
+            <button key={s} aria-pressed={!live && clock.speed === s} disabled={live} className={btn} onClick={() => command({ cmd: "speed", value: s })}>
               {s}x
             </button>
           ))}
